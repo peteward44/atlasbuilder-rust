@@ -1,80 +1,46 @@
 extern crate image;
 
-use image::{DynamicImage, GenericImageView};
+mod inputimage;
+mod outputmeta;
 
-struct Rect {
-	x: i32,
-	y: i32,
+
+struct OutputImage {
+	data: Vec<u8>,
 	w: i32,
 	h: i32
 }
 
-struct InputImage {
-	data: Vec<u8>,
-	width: i32,
-	height: i32
-}
-
-
-impl InputImage {
-    fn new( w: i32, h: i32 ) -> InputImage {
-        InputImage { width: w, height: h, data: vec!() }
-    }
-}
-
-struct OutputImage {
-	data: Vec<u8>,
-	width: i32,
-	height: i32,
-	rects: Vec<Rect>
-}
-
 impl OutputImage {
-    fn add_input( &mut self, img: InputImage, sx: i32, sy: i32, dx: i32, dy: i32, w: i32, h: i32 ) {
-		println!("add_input");
-		for row in 0..h {
-			let srcx = row*200*4;
-			let srcy = (row+1)*200*4;
-			let dstx = row*600*4;
-			let dsty = (row)*600*4 + 200*4;
-			//outp[dstx as usize..dsty as usize].copy_from_slice( &inp[srcx as usize..srcy as usize] );
+	fn add_input( &mut self, img: &inputimage::InputImage, dx: i32, dy: i32 ) {
+		for row in 0..img.vh {
+			let srcx = (img.vy+row)*img.w*4 + img.vx*4;
+			let srcy = srcx + img.w*4;
+			let dstx = ( dy + row )*self.w*4 + dx*4;
+			let dsty = dstx + img.w*4;
+			self.data[dstx as usize..dsty as usize].copy_from_slice( &img.data[srcx as usize..srcy as usize] );
 		}
 	}
 
-    fn new( w: i32, h: i32 ) -> OutputImage {
-        OutputImage { width: w, height: h, rects: vec!(), data: vec!() }
-    }
+	fn new( w: i32, h: i32 ) -> OutputImage {
+		let size = w*h*4;
+		OutputImage { w: w, h: h, data: vec![0; size as usize] }
+	}
+	
+	fn save( &self, filename: &str ) {
+		image::save_buffer( filename, &self.data, 600, 600, image::RGBA(8)).unwrap();
+	}
 }
 
-
 fn main() {
+	let mut output_meta = outputmeta::OutputMeta::new();
 	let mut output = OutputImage::new( 600, 600 );
-	let input = InputImage::new( 200, 200 );
-	output.add_input( input, 0, 0, 0, 0, input.width, input.height );
-
-	const outpLength: usize = 600*600*4;
-	let mut outp: Vec<u8> = vec![0; outpLength];
-	//let mut outp: [u8; outpLength] = [0; outpLength]; // Generate the image data
-	//let mut outp = [u8; outpLength];
-	let mut imga = image::open( "test/input1.png" ).unwrap();
-	let img: image::ImageBuffer<image::Rgba<u8>, std::vec::Vec<u8>> = imga.to_rgba();
+	let mut input = inputimage::InputImage::load( "test/input1_trim.png" );
+	input.trim();
 	
-	let inp = img.into_vec();
-	//let mut outp = output.raw_pixels();
+	output.add_input( &input, 0, 0 );
+	output_meta.add_input( &input, 0, 0 );
 	
-	for row in 0..200 {
-		let srcx = row*200*4;
-		let srcy = (row+1)*200*4;
-		let dstx = row*600*4;
-		let dsty = (row)*600*4 + 200*4;
-		outp[dstx as usize..dsty as usize].copy_from_slice( &inp[srcx as usize..srcy as usize] );
-	}
-
-	//let img = ImageBuffer::new(512, 512);
-	println!("Hello, world!");
-	//println!("dimensions {:?}", img.dimensions());
-
-	image::save_buffer( "test/out.png", &outp, 600, 600, image::RGBA(8)).unwrap();
-//	output.save( "test/out.png" );
+	output.save( "test/out.png" );
+	output_meta.save( "test/out.json" );
 }
 
