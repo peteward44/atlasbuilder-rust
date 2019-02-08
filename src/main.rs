@@ -8,6 +8,7 @@ extern crate serde_derive;
 mod inputimage;
 mod outputmeta;
 mod outputimage;
+mod shapes;
 
 
 fn main() {
