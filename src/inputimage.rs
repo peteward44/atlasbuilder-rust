@@ -1,6 +1,7 @@
 extern crate image;
 
 pub struct InputImage {
+	pub name: String,
 	pub data: Vec<u8>,
 	pub w: i32,
 	pub h: i32,
@@ -19,7 +20,7 @@ impl InputImage {
 		let data = img.into_vec();
 		let w = dims.0 as i32;
 		let h = dims.1 as i32;
-		InputImage { w: w, h: h, vw: w, vh: h, vx: 0, vy: 0, data: data }
+		InputImage { name: filename.to_string(), w: w, h: h, vw: w, vh: h, vx: 0, vy: 0, data: data }
 	}
 	
 	pub fn trim( &mut self ) {
