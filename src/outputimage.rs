@@ -10,7 +10,7 @@ pub struct OutputImage {
 }
 
 impl OutputImage {
-	pub fn add_input( &mut self, img: &inputimage::InputImage, dx: i32, dy: i32 ) {
+	pub fn add_input( &mut self, img: &inputimage::InputImage, dx: i32, dy: i32, rotated: bool ) {
 		for row in 0..img.vh {
 			let srcx = (img.vy+row)*img.w*4 + img.vx*4;
 			let srcy = srcx + img.w*4;

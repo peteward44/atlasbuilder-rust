@@ -123,7 +123,7 @@ impl OutputMeta {
 		OutputMeta { subs: vec!() }
 	}
 
-	pub fn add_input( &mut self, img: &inputimage::InputImage, dx: i32, dy: i32 ) {
+	pub fn add_input( &mut self, img: &inputimage::InputImage, dx: i32, dy: i32, rotated: bool ) {
 		let rect = SubImage{
 			name: img.name.to_string(),
 			dest_x: dx,
