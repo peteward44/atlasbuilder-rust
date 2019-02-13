@@ -23,8 +23,6 @@ fn rect_intersects( a: &shapes::Rect, b: &shapes::Rect ) -> bool {
 }
 
 pub struct Packer {
-	w: i32,
-	h: i32,
 	used_rects: Vec<shapes::Rect>,
 	free_rects: Vec<shapes::Rect>
 }
@@ -34,8 +32,6 @@ impl Packer {
 		let mut free = vec!();
 		free.push( shapes::Rect{ x: 0, y:0, w: w, h: h } );
 		Packer{
-			w: w,
-			h: h,
 			used_rects: vec!(),
 			free_rects: free
 		}
@@ -170,3 +166,16 @@ impl Packer {
 		} );
 	}
 }
+
+
+
+#[cfg(test)]
+mod test_packer {
+	#[test]
+	fn basic_packer_test() {
+		let packer = super::Packer::new( 100, 100 );
+		// assert_eq!(add(1, 2), 3);
+	}
+}
+
+
