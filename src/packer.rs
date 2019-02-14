@@ -167,14 +167,36 @@ impl Packer {
 	}
 }
 
-
-
 #[cfg(test)]
 mod test_packer {
+
+	fn assert_pack_result( result: &super::PackResult, x: i32, y: i32, w: i32, h: i32, rotated: bool ) {
+		println!( "{:?} {:?}", result.rect.x, result.rect.y );
+		assert_eq!( result.rect.x, x );
+		assert_eq!( result.rect.y, y );
+		assert_eq!( result.rect.w, w );
+		assert_eq!( result.rect.h, h );
+		assert_eq!( result.rotated, rotated );
+	}
+
 	#[test]
 	fn basic_packer_test() {
-		let packer = super::Packer::new( 100, 100 );
-		// assert_eq!(add(1, 2), 3);
+		let mut packer = super::Packer::new( 100, 100 );
+
+		let result1 = packer.pack( 10, 10, false );
+		assert_pack_result( &result1, 0, 0, 10, 10, false );
+
+		let result2 = packer.pack( 10, 10, false );
+		assert_pack_result( &result2, 0, 10, 10, 10, false );
+
+		let result3 = packer.pack( 50, 10, false );
+		assert_pack_result( &result3, 10, 10, 50, 10, false );
+		
+		let result4 = packer.pack( 50, 50, false );
+		assert_pack_result( &result4, 10, 20, 50, 50, false );
+		
+		let result5 = packer.pack( 23, 75, false );
+		assert_pack_result( &result5, 60, 20, 23, 75, false );
 	}
 }
 
