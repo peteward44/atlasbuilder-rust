@@ -79,6 +79,6 @@ impl InputImage {
 		self.vw = right - left;
 		self.vy = top;
 		self.vh = bottom - top;
-		println!( "{:?} {:?} {:?} {:?}", left, right, top, bottom );
+//		println!( "{:?} {:?} {:?} {:?}", left, right, top, bottom );
 	}
 }
