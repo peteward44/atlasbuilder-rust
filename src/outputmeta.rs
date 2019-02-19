@@ -138,20 +138,20 @@ impl OutputMeta {
 		self.subs.push( rect );
 	}
 
-	pub fn save( &self, filename: &str, format: &str ) {
+	pub fn save( &self, filename: &str, format: &str, output_name: &str, output_width: i32, output_height: i32 ) {
 		let mut json;
-		
+		let meta = JsonHashMeta {
+			app: "https://github.com/peteward44/atlasbuilder-rust".to_string(),
+			image: output_name.to_string(),
+			size: shapes::Size {
+				w: output_width,
+				h: output_height
+			}
+		};
 		if format == "array" {
 			let mut data: JsonArray = JsonArray{
 				frames: Vec::new(),
-				meta: JsonHashMeta {
-					app: "https://github.com/peteward44/atlasbuilder-rust".to_string(),
-					image: "".to_string(),
-					size: shapes::Size {
-						w: 100,
-						h: 100
-					}
-				}
+				meta: meta
 			};
 			for sub in &self.subs {
 				data.frames.push( JsonArrayFrame {
@@ -167,14 +167,7 @@ impl OutputMeta {
 		} else {
 			let mut data: JsonHash = JsonHash{
 				frames: HashMap::new(),
-				meta: JsonHashMeta {
-					app: "https://github.com/peteward44/atlasbuilder-rust".to_string(),
-					image: "".to_string(),
-					size: shapes::Size {
-						w: 100,
-						h: 100
-					}
-				}
+				meta: meta
 			};
 			for sub in &self.subs {
 				data.frames.insert( sub.name.to_string(), JsonHashFrame {

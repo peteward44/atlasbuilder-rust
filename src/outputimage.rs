@@ -38,7 +38,7 @@ impl OutputImage {
 	}
 	
 	pub fn save( &self, filename: &str ) {
-		image::save_buffer( filename, &self.data, 600, 600, image::RGBA(8)).unwrap();
+		image::save_buffer( filename, &self.data, self.w as u32, self.h as u32, image::RGBA(8)).unwrap();
 	}
 }
 

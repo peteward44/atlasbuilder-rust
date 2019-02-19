@@ -37,7 +37,7 @@ impl Packer {
 		}
 	}
 
-	fn find_best_free_rect( &self, w: i32, h: i32, allow_rotate: bool ) -> PackResult {
+	fn find_best_free_rect( &self, w: i32, h: i32, allow_rotate: bool ) -> Option<PackResult> {
 		// Find best free rectangle to insert target rect into
 		let mut best_short_side_fit = std::i32::MAX;
 		let mut best_long_side_fit = std::i32::MAX;
@@ -79,71 +79,82 @@ impl Packer {
 				}
 			}
 		}
-		PackResult{
-			rect: best_rect, rotated: best_rotated
+		if best_rect.w == 0 {
+			None
+		} else {
+			Some( PackResult{
+				rect: best_rect, rotated: best_rotated
+			} )
 		}
 	}
 
-	pub fn pack( &mut self, w: i32, h: i32, allow_rotate: bool ) -> PackResult {
-		let result = self.find_best_free_rect( w, h, allow_rotate );
-		let mut new_rects: Vec<shapes::Rect> = vec!();
-		self.free_rects.retain( |free_rect| {
-			if !rect_intersects( free_rect, &result.rect ) {
-				return true;
-			}
-			if result.rect.x < free_rect.x + free_rect.w && result.rect.x + result.rect.w > free_rect.x {
-				// new node at top side of the used node.
-				if result.rect.y > free_rect.y && result.rect.y < free_rect.y + free_rect.h {
-					new_rects.push( shapes::Rect{
-						x: free_rect.x,
-						y: free_rect.y,
-						w: free_rect.w,
-						h: result.rect.y - free_rect.y
-					} );
+	pub fn pack( &mut self, w: i32, h: i32, allow_rotate: bool ) -> Option<PackResult> {
+		let result_option = self.find_best_free_rect( w, h, allow_rotate );
+		match result_option {
+			Some( result ) => {
+				let mut new_rects: Vec<shapes::Rect> = vec!();
+				self.free_rects.retain( |free_rect| {
+					if !rect_intersects( free_rect, &result.rect ) {
+						return true;
+					}
+					if result.rect.x < free_rect.x + free_rect.w && result.rect.x + result.rect.w > free_rect.x {
+						// new node at top side of the used node.
+						if result.rect.y > free_rect.y && result.rect.y < free_rect.y + free_rect.h {
+							new_rects.push( shapes::Rect{
+								x: free_rect.x,
+								y: free_rect.y,
+								w: free_rect.w,
+								h: result.rect.y - free_rect.y
+							} );
+						}
+						
+						// New node at the bottom side of the used node
+						if result.rect.y + result.rect.h < free_rect.y + free_rect.h {
+							new_rects.push( shapes::Rect{
+								x: free_rect.x,
+								y: result.rect.y + result.rect.h,
+								w: free_rect.w,
+								h: free_rect.y + free_rect.h - result.rect.y - result.rect.h
+							} );
+						}
+					}
+					
+					if result.rect.y < free_rect.y + free_rect.h && result.rect.y + result.rect.h > free_rect.y {
+						// new node at the left side of the used node.
+						if result.rect.x > free_rect.x && result.rect.x < free_rect.x + free_rect.w {
+							new_rects.push( shapes::Rect{
+								x: free_rect.x,
+								y: free_rect.y,
+								w: result.rect.x - free_rect.x,
+								h: free_rect.h
+							} );
+						}
+						
+						// new node at the right side of the used node
+						if result.rect.x + result.rect.w < free_rect.x + free_rect.w {
+							new_rects.push( shapes::Rect{
+								x: result.rect.x + result.rect.w,
+								y: free_rect.y,
+								w: free_rect.x + free_rect.w - result.rect.x - result.rect.w,
+								h: free_rect.h
+							} );
+						}
+					}
+					return false;
+				} );
+				
+				for rect in new_rects {
+					self.free_rects.push( rect );
 				}
 				
-				// New node at the bottom side of the used node
-				if result.rect.y + result.rect.h < free_rect.y + free_rect.h {
-					new_rects.push( shapes::Rect{
-						x: free_rect.x,
-						y: result.rect.y + result.rect.h,
-						w: free_rect.w,
-						h: free_rect.y + free_rect.h - result.rect.y - result.rect.h
-					} );
-				}
-			}
-			
-			if result.rect.y < free_rect.y + free_rect.h && result.rect.y + result.rect.h > free_rect.y {
-				// new node at the left side of the used node.
-				if result.rect.x > free_rect.x && result.rect.x < free_rect.x + free_rect.w {
-					new_rects.push( shapes::Rect{
-						x: free_rect.x,
-						y: free_rect.y,
-						w: result.rect.x - free_rect.x,
-						h: free_rect.h
-					} );
-				}
+				self.prune_free_rects();
 				
-				// new node at the right side of the used node
-				if result.rect.x + result.rect.w < free_rect.x + free_rect.w {
-					new_rects.push( shapes::Rect{
-						x: result.rect.x + result.rect.w,
-						y: free_rect.y,
-						w: free_rect.x + free_rect.w - result.rect.x - result.rect.w,
-						h: free_rect.h
-					} );
-				}
+				Some( result )
 			}
-			return false;
-		} );
-		
-		for rect in new_rects {
-			self.free_rects.push( rect );
+			None => {
+				None
+			}
 		}
-		
-		self.prune_free_rects();
-		
-		result
 	}
 	
 	fn prune_free_rects( &mut self ) {
