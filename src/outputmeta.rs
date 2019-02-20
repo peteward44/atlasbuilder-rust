@@ -138,7 +138,7 @@ impl OutputMeta {
 		self.subs.push( rect );
 	}
 
-	pub fn save( &self, filename: &str, format: &str, output_name: &str, output_width: i32, output_height: i32 ) {
+	pub fn save( &self, filename: &std::path::Path, format: &str, output_name: &str, output_width: i32, output_height: i32 ) {
 		let mut json;
 		let meta = JsonHashMeta {
 			app: "https://github.com/peteward44/atlasbuilder-rust".to_string(),

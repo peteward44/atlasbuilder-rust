@@ -37,7 +37,7 @@ impl OutputImage {
 		OutputImage { w: w, h: h, data: vec![0; size as usize] }
 	}
 	
-	pub fn save( &self, filename: &str ) {
+	pub fn save( &self, filename: &std::path::Path ) {
 		image::save_buffer( filename, &self.data, self.w as u32, self.h as u32, image::RGBA(8)).unwrap();
 	}
 }

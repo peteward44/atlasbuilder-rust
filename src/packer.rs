@@ -23,21 +23,23 @@ fn rect_intersects( a: &shapes::Rect, b: &shapes::Rect ) -> bool {
 }
 
 pub struct Packer {
-	used_rects: Vec<shapes::Rect>,
-	free_rects: Vec<shapes::Rect>
+	allow_rotate: bool,
+	free_rects: Vec<shapes::Rect>,
+	results: Vec<PackResult>
 }
 
 impl Packer {
-	pub fn new( w: i32, h: i32 ) -> Packer {
+	pub fn new( w: i32, h: i32, allow_rotate: bool ) -> Packer {
 		let mut free = vec!();
 		free.push( shapes::Rect{ x: 0, y:0, w: w, h: h } );
 		Packer{
-			used_rects: vec!(),
-			free_rects: free
+			free_rects: free,
+			allow_rotate: allow_rotate,
+			results: vec!()
 		}
 	}
 
-	fn find_best_free_rect( &self, w: i32, h: i32, allow_rotate: bool ) -> Option<PackResult> {
+	fn find_best_free_rect( &self, w: i32, h: i32 ) -> Option<PackResult> {
 		// Find best free rectangle to insert target rect into
 		let mut best_short_side_fit = std::i32::MAX;
 		let mut best_long_side_fit = std::i32::MAX;
@@ -63,7 +65,7 @@ impl Packer {
 			}
 
 			// then try fitting it in rotated
-			if allow_rotate && rect.w >= h && rect.h >= w {
+			if self.allow_rotate && rect.w >= h && rect.h >= w {
 				let leftover_horiz = ( rect.w - h ).abs();
 				let leftover_vert = ( rect.h - w ).abs();
 				let short_side_fit = cmp::min( leftover_horiz, leftover_vert );
@@ -88,8 +90,8 @@ impl Packer {
 		}
 	}
 
-	pub fn pack( &mut self, w: i32, h: i32, allow_rotate: bool ) -> Option<PackResult> {
-		let result_option = self.find_best_free_rect( w, h, allow_rotate );
+	fn attempt_pack( &mut self, w: i32, h: i32 ) -> Option<PackResult> {
+		let result_option = self.find_best_free_rect( w, h );
 		match result_option {
 			Some( result ) => {
 				let mut new_rects: Vec<shapes::Rect> = vec!();
@@ -175,6 +177,27 @@ impl Packer {
 			index = index + 1;
 			!removed.contains( &index )
 		} );
+	}
+	
+	pub fn pack( &mut self, w: i32, h: i32 ) -> bool {
+		let result = self.attempt_pack( w, h );
+		match result {
+			Some(result) => {
+				self.results.push( result );
+				true
+			}
+			None => {
+				false
+			}
+		}
+	}
+	
+	pub fn grow( &mut self ) -> bool {
+		true
+	}
+	
+	pub fn get_results( &self ) -> &Vec<PackResult> {
+		&self.results
 	}
 }
 
