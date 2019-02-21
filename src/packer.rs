@@ -151,6 +151,7 @@ impl Packer {
 				
 				self.prune_free_rects();
 				
+				println!( "result.rect.x = {:?} result.rect.w = {:?} result.rect.y = {:?} result.rect.h = {:?}", result.rect.x, result.rect.w, result.rect.y, result.rect.h );
 				Some( result )
 			}
 			None => {

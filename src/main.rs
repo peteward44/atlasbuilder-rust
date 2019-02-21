@@ -63,20 +63,20 @@ fn main() {
 	let output_json_filename = std::path::Path::new(matches.value_of("json").unwrap_or("out.json"));
 	let allow_rotation = !matches.is_present("rotation-disable");
 	let allow_grow = !matches.is_present("fixed-size");
-		
+
 	let mut packer = packer::Packer::new( output_width, output_height, allow_rotation );
-	
+
 	println!( "Calculating rects..." );
 	let mut inputs: Vec<inputimage::InputImage> = vec!();
 	for filename in input_filenames {
 		let mut input = inputimage::InputImage::load( "test_images/input1_trim.png" );
 		input.trim();
-		inputs.push( input );
-		while !packer.pack( input.w, input.h ) {
+		while !packer.pack( input.vw, input.vh ) {
 			if !packer.grow() {
 				panic!( "Output size exceeded!" );
 			}
 		}
+		inputs.push( input );
 	}
 
 	let mut output_meta = outputmeta::OutputMeta::new();

@@ -104,6 +104,7 @@ struct JsonArray {
 
 struct SubImage {
 	pub name: String,
+	pub rotated: bool,
 	pub dest_x: i32,
 	pub dest_y: i32,
 	pub trimmed_x: i32,
@@ -126,14 +127,15 @@ impl OutputMeta {
 	pub fn add_input( &mut self, img: &inputimage::InputImage, dx: i32, dy: i32, rotated: bool ) {
 		let rect = SubImage{
 			name: img.name.to_string(),
+			rotated: rotated,
 			dest_x: dx,
 			dest_y: dy,
 			trimmed_x: img.vx,
 			trimmed_y: img.vy,
-			trimmed_w: img.w,
-			trimmed_h: img.h,
-			pretrimmed_w: img.vw,
-			pretrimmed_h: img.vh
+			trimmed_w: img.vw,
+			trimmed_h: img.vh,
+			pretrimmed_w: img.w,
+			pretrimmed_h: img.h
 		};
 		self.subs.push( rect );
 	}
@@ -156,7 +158,7 @@ impl OutputMeta {
 			for sub in &self.subs {
 				data.frames.push( JsonArrayFrame {
 					filename: sub.name.to_string(),
-					rotated: false,
+					rotated: sub.rotated,
 					trimmed: true,
 					frame: shapes::Rect { x: sub.dest_x, y: sub.dest_y, w: sub.trimmed_w, h: sub.trimmed_h },
 					spriteSourceSize: shapes::Rect { x: sub.trimmed_x, y: sub.trimmed_y, w: sub.trimmed_w, h: sub.trimmed_h },
@@ -171,7 +173,7 @@ impl OutputMeta {
 			};
 			for sub in &self.subs {
 				data.frames.insert( sub.name.to_string(), JsonHashFrame {
-					rotated: false,
+					rotated: sub.rotated,
 					trimmed: true,
 					frame: shapes::Rect { x: sub.dest_x, y: sub.dest_y, w: sub.trimmed_w, h: sub.trimmed_h },
 					spriteSourceSize: shapes::Rect { x: sub.trimmed_x, y: sub.trimmed_y, w: sub.trimmed_w, h: sub.trimmed_h },
@@ -184,8 +186,6 @@ impl OutputMeta {
 		if json.is_ok() {
 			println!( "{:?}", json );
 			std::fs::write( filename, json.unwrap() );
-		} else {
-		
 		}
 	}
 }
