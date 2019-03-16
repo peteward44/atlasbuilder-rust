@@ -1,12 +1,9 @@
-use serde::{Deserialize, Serialize};
-use serde_json::{Result, to_string};
 use std::collections::HashMap;
-use std::fs;
-
 use super::shapes;
 use super::inputimage;
 
 #[derive(Serialize, Deserialize)]
+#[allow(non_snake_case)]
 struct JsonHashFrame {
 	rotated: bool,
 	trimmed: bool,
@@ -29,6 +26,7 @@ struct JsonHash {
 }
 
 #[derive(Serialize, Deserialize)]
+#[allow(non_snake_case)]
 struct JsonArrayFrame {
 	filename: String,
 	rotated: bool,
@@ -140,8 +138,8 @@ impl OutputMeta {
 		self.subs.push( rect );
 	}
 
-	pub fn save( &self, filename: &std::path::Path, format: &str, output_name: &str, output_width: i32, output_height: i32 ) {
-		let mut json;
+	pub fn save( &self, filename: &std::path::Path, format: &str, output_name: &str, output_width: i32, output_height: i32 ) -> std::result::Result<String, failure::Error> {
+		let json;
 		let meta = JsonHashMeta {
 			app: "https://github.com/peteward44/atlasbuilder-rust".to_string(),
 			image: output_name.to_string(),
@@ -165,7 +163,7 @@ impl OutputMeta {
 					sourceSize: shapes::Size { w: sub.pretrimmed_w, h: sub.pretrimmed_h }
 				} );
 			}
-			json = serde_json::to_string( &data );
+			json = serde_json::to_string( &data )?;
 		} else {
 			let mut data: JsonHash = JsonHash{
 				frames: HashMap::new(),
@@ -180,12 +178,12 @@ impl OutputMeta {
 					sourceSize: shapes::Size { w: sub.pretrimmed_w, h: sub.pretrimmed_h }
 				} );
 			}
-			json = serde_json::to_string( &data );
+			json = serde_json::to_string( &data )?;
 		}
 		
-		if json.is_ok() {
-			println!( "{:?}", json );
-			std::fs::write( filename, json.unwrap() );
-		}
+		println!( "{:?}", json );
+		std::fs::write( filename, json.to_string() )?;
+
+		Ok(json)
 	}
 }

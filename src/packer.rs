@@ -1,7 +1,5 @@
 use std::cmp;
 use std::i32;
-
-use super::inputimage;
 use super::shapes;
 
 pub struct PackResult {
@@ -23,30 +21,40 @@ fn rect_intersects( a: &shapes::Rect, b: &shapes::Rect ) -> bool {
 }
 
 pub struct Packer {
+	w: i32,
+	h: i32,
+	w_limit: i32,
+	h_limit: i32,
 	allow_rotate: bool,
 	free_rects: Vec<shapes::Rect>,
 	results: Vec<PackResult>
 }
 
 impl Packer {
-	pub fn new( w: i32, h: i32, allow_rotate: bool ) -> Packer {
+	pub fn new( w: i32, h: i32, allow_grow: bool, allow_rotate: bool ) -> Packer {
+		let w_use = if allow_grow { 128 } else { w };
+		let h_use = if allow_grow { 128 } else { h };
 		let mut free = vec!();
-		free.push( shapes::Rect{ x: 0, y:0, w: w, h: h } );
+		free.push( shapes::Rect{ x: 0, y:0, w: w_use, h: h_use } );
 		Packer{
+			w: w_use,
+			h: h_use,
+			w_limit: w,
+			h_limit: h,
 			free_rects: free,
 			allow_rotate: allow_rotate,
 			results: vec!()
 		}
 	}
 
-	fn find_best_free_rect( &self, w: i32, h: i32 ) -> Option<PackResult> {
+	fn find_best_free_rect( &self, w: i32, h: i32, free_rects: &Vec<shapes::Rect> ) -> Option<PackResult> {
 		// Find best free rectangle to insert target rect into
 		let mut best_short_side_fit = std::i32::MAX;
 		let mut best_long_side_fit = std::i32::MAX;
 		let mut best_rect: shapes::Rect = shapes::Rect{ x:0, y:0, w:0, h: 0 };
 		let mut best_rotated: bool = false;
 		
-		for rect in self.free_rects.iter() {
+		for rect in free_rects.iter() {
 			// Try to place the rectangle in upright (non-flipped) orientation
 			if rect.w >= w && rect.h >= h {
 				let leftover_horiz = ( rect.w - w ).abs();
@@ -82,20 +90,22 @@ impl Packer {
 			}
 		}
 		if best_rect.w == 0 {
+			println!("No space in atlas");
 			None
 		} else {
+			println!("Found rect.x={:?} rect.y={:?} rect.w={:?} rect.h={:?}", best_rect.x, best_rect.y, best_rect.w, best_rect.h);
 			Some( PackResult{
 				rect: best_rect, rotated: best_rotated
 			} )
 		}
 	}
 
-	fn attempt_pack( &mut self, w: i32, h: i32 ) -> Option<PackResult> {
-		let result_option = self.find_best_free_rect( w, h );
+	fn attempt_pack( &self, w: i32, h: i32, free_rects: &mut Vec<shapes::Rect> ) -> Option<PackResult> {
+		let result_option = self.find_best_free_rect( w, h, free_rects );
 		match result_option {
 			Some( result ) => {
 				let mut new_rects: Vec<shapes::Rect> = vec!();
-				self.free_rects.retain( |free_rect| {
+				free_rects.retain( |free_rect| {
 					if !rect_intersects( free_rect, &result.rect ) {
 						return true;
 					}
@@ -146,10 +156,10 @@ impl Packer {
 				} );
 				
 				for rect in new_rects {
-					self.free_rects.push( rect );
+					free_rects.push( rect );
 				}
 				
-				self.prune_free_rects();
+				self.prune_free_rects( free_rects );
 				
 				println!( "result.rect.x = {:?} result.rect.w = {:?} result.rect.y = {:?} result.rect.h = {:?}", result.rect.x, result.rect.w, result.rect.y, result.rect.h );
 				Some( result )
@@ -160,30 +170,32 @@ impl Packer {
 		}
 	}
 	
-	fn prune_free_rects( &mut self ) {
+	fn prune_free_rects( &self, free_rects: &mut Vec<shapes::Rect> ) {
 		let mut removed: Vec<usize> = vec!();
-		for i in 0..self.free_rects.len() {
-			for j in (i+1)..self.free_rects.len() {
-				if rect_contains( &self.free_rects[i], &self.free_rects[j] ) {
+		for i in 0..free_rects.len() {
+			for j in (i+1)..free_rects.len() {
+				if rect_contains( &free_rects[i], &free_rects[j] ) {
 					removed.push( i );
 					break;
 				}
-				if rect_contains( &self.free_rects[j], &self.free_rects[i] ) {
+				if rect_contains( &free_rects[j], &free_rects[i] ) {
 					removed.push( j );
 				}
 			}
 		}
 		let mut index: usize = 0;
-		self.free_rects.retain( |free_rect| {
+		free_rects.retain( |_free_rect| {
 			index = index + 1;
 			!removed.contains( &index )
 		} );
 	}
 	
 	pub fn pack( &mut self, w: i32, h: i32 ) -> bool {
-		let result = self.attempt_pack( w, h );
+		let mut rects: Vec<shapes::Rect> = self.free_rects.clone();
+		let result = self.attempt_pack( w, h, &mut rects );
 		match result {
 			Some(result) => {
+				self.free_rects = rects;
 				self.results.push( result );
 				true
 			}
@@ -193,7 +205,55 @@ impl Packer {
 		}
 	}
 	
+	fn repack_results( &mut self ) -> bool {
+		let mut new_results: Vec<PackResult> = vec!();
+		let mut free_rects: Vec<shapes::Rect> = vec!();
+		free_rects.push( shapes::Rect{ x: 0, y:0, w: self.w, h: self.h } );
+		new_results.reserve( self.results.len() );
+		for result in self.results.iter() {
+			let result = self.attempt_pack( if result.rotated { result.rect.h } else { result.rect.w }, if result.rotated { result.rect.w } else { result.rect.h }, &mut free_rects );
+			match result {
+				Some(resultx) => {
+					new_results.push( resultx );
+				}
+				None => {
+					return false;
+				}
+			}
+		}
+		self.results = new_results;
+		self.free_rects = free_rects;
+		return true;
+	}
+
+	// Expensive operation
 	pub fn grow( &mut self ) -> bool {
+		loop {
+			if self.w >= self.w_limit && self.h >= self.h_limit {
+				return false;
+			}
+			if self.w >= self.w_limit {
+				self.h *= 2;
+				println!( "self.h={:?}", self.h );
+			} else if self.h >= self.h_limit {
+				self.w *= 2;
+				println!( "self.w={:?}", self.w );
+			} else {
+				if self.w < self.h {
+					self.w *= 2;
+					println!( "self.w={:?}", self.w );
+				} else {
+					self.h *= 2;
+					println!( "self.h={:?}", self.h );
+				}
+			}
+			self.w = std::cmp::min( self.w, self.w_limit );
+			self.h = std::cmp::min( self.h, self.h_limit );
+			if self.repack_results() {
+				break;
+			}
+		}
+		
 		true
 	}
 	
@@ -216,22 +276,43 @@ mod test_packer {
 
 	#[test]
 	fn basic_packer_test() {
-		let mut packer = super::Packer::new( 100, 100 );
+		let mut packer = super::Packer::new( 100, 100, false, false );
 
-		let result1 = packer.pack( 10, 10, false );
-		assert_pack_result( &result1, 0, 0, 10, 10, false );
+		let result1 = packer.pack( 10, 10 );
+		assert_eq!( result1, true );
+		assert_pack_result( &packer.get_results()[0], 0, 0, 10, 10, false );
 
-		let result2 = packer.pack( 10, 10, false );
-		assert_pack_result( &result2, 0, 10, 10, 10, false );
+		let result2 = packer.pack( 10, 10 );
+		assert_eq!( result2, true );
+		assert_pack_result( &packer.get_results()[1], 0, 10, 10, 10, false );
 
-		let result3 = packer.pack( 50, 10, false );
-		assert_pack_result( &result3, 10, 10, 50, 10, false );
+		let result3 = packer.pack( 50, 10 );
+		assert_eq!( result3, true );
+		assert_pack_result( &packer.get_results()[2], 10, 10, 50, 10, false );
 		
-		let result4 = packer.pack( 50, 50, false );
-		assert_pack_result( &result4, 10, 20, 50, 50, false );
+		let result4 = packer.pack( 50, 50 );
+		assert_eq!( result4, true );
+		assert_pack_result( &packer.get_results()[3], 10, 20, 50, 50, false );
 		
-		let result5 = packer.pack( 23, 75, false );
-		assert_pack_result( &result5, 60, 20, 23, 75, false );
+		let result5 = packer.pack( 23, 75 );
+		assert_eq!( result5, true );
+		assert_pack_result( &packer.get_results()[4], 60, 20, 23, 75, false );
+	}
+	
+	#[test]
+	fn automatic_grow_test() {
+		let mut packer = super::Packer::new( 1024, 1024, true, false );
+		assert_eq!( packer.w, 128 );
+		assert_eq!( packer.h, 128 );
+		let result1 = packer.pack( 200, 100 );
+		assert_eq!( result1, false );
+		let grow_result = packer.grow();
+		assert_eq!( grow_result, true );
+		assert_eq!( packer.w, 128 );
+		assert_eq!( packer.h, 256 );
+		let result2 = packer.pack( 100, 200 );
+		assert_eq!( result2, true );
+		assert_pack_result( &packer.get_results()[0], 0, 0, 100, 200, false );
 	}
 }
 

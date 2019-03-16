@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-use serde_json::{Result, to_string};
 
 #[derive(Serialize, Deserialize, Copy)]
 pub struct Size {

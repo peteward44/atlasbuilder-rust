@@ -1,10 +1,8 @@
-#[macro_use]
 extern crate serde;
-#[macro_use]
 extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
+#[macro_use] extern crate serde_derive;
 extern crate clap;
+#[macro_use] extern crate failure;
 
 mod inputimage;
 mod outputmeta;
@@ -14,8 +12,7 @@ mod packer;
 
 use clap::{Arg, App};
 
-
-fn main() {
+fn operate() -> std::result::Result<(), failure::Error> {
 	let matches = App::new("Atlasbuilder")
 		.version("1.0.0")
 		.author("Pete Ward <peteward44@gmail.com>")
@@ -64,16 +61,16 @@ fn main() {
 	let allow_rotation = !matches.is_present("rotation-disable");
 	let allow_grow = !matches.is_present("fixed-size");
 
-	let mut packer = packer::Packer::new( output_width, output_height, allow_rotation );
+	let mut packer = packer::Packer::new( output_width, output_height, allow_grow, allow_rotation );
 
 	println!( "Calculating rects..." );
 	let mut inputs: Vec<inputimage::InputImage> = vec!();
-	for filename in input_filenames {
-		let mut input = inputimage::InputImage::load( "test_images/input1_trim.png" );
+	for filename in input_filenames.iter() {
+		let mut input = inputimage::InputImage::load( filename );
 		input.trim();
 		while !packer.pack( input.vw, input.vh ) {
 			if !packer.grow() {
-				panic!( "Output size exceeded!" );
+				bail!( "Output size exceeded!" );
 			}
 		}
 		inputs.push( input );
@@ -90,7 +87,17 @@ fn main() {
 		output_meta.add_input( &input, pack_result.rect.x, pack_result.rect.y, pack_result.rotated );
 	}
 	println!( "Outputting final image {:?}", output_filename );
-	output.save( output_filename );
-	output_meta.save( output_json_filename, "hash", output_filename.to_str().unwrap(), output.w, output.h );
+	output.save( output_filename )?;
+	output_meta.save( output_json_filename, "hash", output_filename.to_str().unwrap(), output.w, output.h )?;
+	Ok(())
+}
+
+
+fn main() {
+	let result = operate();
+	match result {
+		Err( e ) => println!("Error creating atlas {:?}", e ),
+		Ok(_json) => println!("Complete!")
+	}
 }
 
