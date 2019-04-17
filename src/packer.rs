@@ -212,18 +212,22 @@ impl Packer {
 		new_results.reserve( self.results.len() );
 		for result in self.results.iter() {
 			let result = self.attempt_pack( if result.rotated { result.rect.h } else { result.rect.w }, if result.rotated { result.rect.w } else { result.rect.h }, &mut free_rects );
-			match result {
-				Some(resultx) => {
-					new_results.push( resultx );
-				}
+			let cont = match result {
 				None => {
-					return false;
-				}
+					false
+				},
+				Some( resultx ) => {
+					new_results.push( resultx );
+					true
+				},
+			};
+			if cont == false {
+				return false;
 			}
 		}
 		self.results = new_results;
 		self.free_rects = free_rects;
-		return true;
+		true
 	}
 
 	// Expensive operation
@@ -259,6 +263,14 @@ impl Packer {
 	
 	pub fn get_results( &self ) -> &Vec<PackResult> {
 		&self.results
+	}
+	
+	pub fn get_w( &self ) -> i32 {
+		self.w
+	}
+	
+	pub fn get_h( &self ) -> i32 {
+		self.h
 	}
 }
 

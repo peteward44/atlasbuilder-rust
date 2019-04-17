@@ -178,10 +178,9 @@ impl OutputMeta {
 					sourceSize: shapes::Size { w: sub.pretrimmed_w, h: sub.pretrimmed_h }
 				} );
 			}
-			json = serde_json::to_string( &data )?;
+			json = serde_json::to_string_pretty( &data )?;
 		}
 		
-		println!( "{:?}", json );
 		std::fs::write( filename, json.to_string() )?;
 
 		Ok(json)
