@@ -28,7 +28,8 @@ pub struct Packer {
 	allow_rotate: bool,
 	used_rects: Vec<shapes::Rect>,
 	free_rects: Vec<shapes::Rect>,
-	results: Vec<PackResult>
+	results: Vec<PackResult>,
+	free_rects_sorted: bool
 }
 
 impl Packer {
@@ -45,7 +46,8 @@ impl Packer {
 			used_rects: vec!(),
 			free_rects: free,
 			allow_rotate: allow_rotate,
-			results: vec!()
+			results: vec!(),
+			free_rects_sorted: false
 		}
 	}
 
@@ -176,29 +178,32 @@ impl Packer {
 		let mut removed: Vec<usize> = vec!();
 		for i in 0..free_rects.len() {
 			for j in (i+1)..free_rects.len() {
-				if rect_contains( &free_rects[i], &free_rects[j] ) {
+				if !removed.contains( &i ) && rect_contains( &free_rects[i], &free_rects[j] ) {
 					removed.push( i );
 					break;
 				}
-				if rect_contains( &free_rects[j], &free_rects[i] ) {
+				if !removed.contains( &j ) && rect_contains( &free_rects[j], &free_rects[i] ) {
 					removed.push( j );
 				}
 			}
 		}
-		let mut index: usize = 0;
-		free_rects.retain( |_free_rect| {
-			index = index + 1;
-			!removed.contains( &index )
-		} );
+		removed.sort_unstable();
+		for index in removed.iter().rev() {
+			free_rects.remove( *index );
+		}
 	}
 	
 	pub fn add( &mut self, w: i32, h: i32 ) {
 		self.used_rects.push( shapes::Rect{ x: 0, y: 0, w: w, h: h } );
+		self.free_rects_sorted = false;
 	}
 	
 	pub fn pack( &mut self ) -> bool {
-		// TODO: sort used rects
-		self.used_rects.sort_unstable_by_key( |r| r.w * r.h );
+		// sort used rects
+		if self.free_rects_sorted == false {
+			self.used_rects.sort_unstable_by_key( |r| r.w * r.h );
+			self.free_rects_sorted = true;
+		}
 		let mut new_results: Vec<PackResult> = vec!();
 		let mut free_rects: Vec<shapes::Rect> = vec!();
 		free_rects.push( shapes::Rect{ x: 0, y:0, w: self.w, h: self.h } );
