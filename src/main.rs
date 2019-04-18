@@ -111,12 +111,14 @@ fn operate() -> std::result::Result<(), failure::Error> {
 	for filename in input_filenames.iter() {
 		let mut input = inputimage::InputImage::load( filename.to_str().unwrap() );
 		input.trim();
-		while !packer.pack( input.vw, input.vh ) {
-			if !packer.grow() {
-				bail!( "Output size exceeded!" );
-			}
-		}
+		packer.add( input.vw, input.vh );
 		inputs.push( input );
+	}
+
+	while !packer.pack() {
+		if !packer.grow() {
+			bail!( "Output size exceeded!" );
+		}
 	}
 
 	let mut output_meta = outputmeta::OutputMeta::new();

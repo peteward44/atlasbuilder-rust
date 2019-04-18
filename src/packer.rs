@@ -26,6 +26,7 @@ pub struct Packer {
 	w_limit: i32,
 	h_limit: i32,
 	allow_rotate: bool,
+	used_rects: Vec<shapes::Rect>,
 	free_rects: Vec<shapes::Rect>,
 	results: Vec<PackResult>
 }
@@ -41,6 +42,7 @@ impl Packer {
 			h: h_use,
 			w_limit: w,
 			h_limit: h,
+			used_rects: vec!(),
 			free_rects: free,
 			allow_rotate: allow_rotate,
 			results: vec!()
@@ -190,19 +192,28 @@ impl Packer {
 		} );
 	}
 	
-	pub fn pack( &mut self, w: i32, h: i32 ) -> bool {
-		let mut rects: Vec<shapes::Rect> = self.free_rects.clone();
-		let result = self.attempt_pack( w, h, &mut rects );
-		match result {
-			Some(result) => {
-				self.free_rects = rects;
+	pub fn add( &mut self, w: i32, h: i32 ) {
+		self.used_rects.push( shapes::Rect{ x: 0, y: 0, w: w, h: h } );
+	}
+
+	pub fn pack( &mut self ) -> bool {
+		// TODO: sort used rects
+		let mut free_rects: Vec<shapes::Rect> = self.free_rects.clone();
+		for used_rect_index in 0..self.used_rects.len() {
+			let r = self.used_rects[used_rect_index];
+			let result = self.attempt_pack( r.w, r.h, &mut free_rects );
+			let cont = match result {
+				Some(result) => true,
+				None => false
+			};
+			if cont == false {
+				return false;
+			} else {
 				self.results.push( result );
-				true
-			}
-			None => {
-				false
 			}
 		}
+		self.free_rects = free_rects;
+		true
 	}
 	
 	fn repack_results( &mut self ) -> bool {
