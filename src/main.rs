@@ -10,9 +10,11 @@ mod outputimage;
 mod shapes;
 mod packer;
 mod parse_input_filenames;
+mod outputdebug;
 
 use clap::{Arg, App};
 use std::path::{ PathBuf };
+
 
 fn operate() -> std::result::Result<(), failure::Error> {
 	let matches = App::new("Atlasbuilder")
@@ -55,7 +57,6 @@ fn operate() -> std::result::Result<(), failure::Error> {
 			.index(1))
 		.get_matches();
 	let input_filenames: Vec<PathBuf> = parse_input_filenames::parse( matches.values_of("input").unwrap().collect() )?;
-//	println!( "{:?}", input_filenames );
 	let output_width = matches.value_of("width").unwrap_or("2048").parse::<i32>().unwrap();
 	let output_height = matches.value_of("height").unwrap_or("2048").parse::<i32>().unwrap();
 	let output_filename = std::path::Path::new(matches.value_of("output").unwrap_or("out.png"));
@@ -71,8 +72,15 @@ fn operate() -> std::result::Result<(), failure::Error> {
 		let mut input = inputimage::InputImage::load( filename.to_str().unwrap() );
 		input.trim();
 		println!( "{{ w: {:?}, h: {:?} }}", input.vw, input.vh );
-		packer.add( input.vw, input.vh );
 		inputs.push( input );
+	}
+
+	// sort by size then reverse order
+	inputs.sort_by_key( |r| r.vw * r.vh );
+	inputs.reverse();
+
+	for input in inputs.iter() {	
+		packer.add( input.vw, input.vh );
 	}
 
 	while !packer.pack() {

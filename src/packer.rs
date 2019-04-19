@@ -1,20 +1,22 @@
 use std::cmp;
 use std::i32;
 use super::shapes;
+use super::outputdebug;
 
 pub struct PackResult {
 	pub rect: shapes::Rect,
 	pub rotated: bool
 }
 
+// True if a is contained within b
 fn rect_contains( a: &shapes::Rect, b: &shapes::Rect ) -> bool {
-	return a.x >= b.x && a.y >= b.y 
+	a.x >= b.x && a.y >= b.y 
 		&& a.x+a.w <= b.x+b.w 
 		&& a.y+a.h <= b.y+b.h
 }
 
 fn rect_intersects( a: &shapes::Rect, b: &shapes::Rect ) -> bool {
-	return !( a.x >= b.x + b.w
+	!( a.x >= b.x + b.w
 		|| a.x + a.w <= b.x
 		|| a.y >= b.y + b.h
 		|| a.y + a.h <= b.y )
@@ -28,8 +30,7 @@ pub struct Packer {
 	allow_rotate: bool,
 	used_rects: Vec<shapes::Rect>,
 	free_rects: Vec<shapes::Rect>,
-	results: Vec<PackResult>,
-	free_rects_sorted: bool
+	results: Vec<PackResult>
 }
 
 impl Packer {
@@ -46,9 +47,12 @@ impl Packer {
 			used_rects: vec!(),
 			free_rects: free,
 			allow_rotate: allow_rotate,
-			results: vec!(),
-			free_rects_sorted: false
+			results: vec!()
 		}
+	}
+	
+	pub fn get_free_rects( &self ) -> &Vec<shapes::Rect> {
+		&self.free_rects
 	}
 
 	fn find_best_free_rect( &self, w: i32, h: i32, free_rects: &Vec<shapes::Rect> ) -> Option<PackResult> {
@@ -104,7 +108,7 @@ impl Packer {
 		}
 	}
 
-	fn attempt_pack( &self, w: i32, h: i32, free_rects: &mut Vec<shapes::Rect> ) -> Option<PackResult> {
+	fn attempt_pack( &self, w: i32, h: i32, free_rects: &mut Vec<shapes::Rect>, index: i32 ) -> Option<PackResult> {
 		let result_option = self.find_best_free_rect( w, h, free_rects );
 		match result_option {
 			Some( result ) => {
@@ -165,6 +169,8 @@ impl Packer {
 				
 				self.prune_free_rects( free_rects );
 				
+//				outputdebug::outputFreeRects( self.w, self.h, free_rects, index );
+				
 //				println!( "result.rect.x = {:?} result.rect.w = {:?} result.rect.y = {:?} result.rect.h = {:?}", result.rect.x, result.rect.w, result.rect.y, result.rect.h );
 				Some( result )
 			}
@@ -188,6 +194,7 @@ impl Packer {
 			}
 		}
 		removed.sort_unstable();
+		println!( "removed {:?}", removed );
 		for index in removed.iter().rev() {
 			free_rects.remove( *index );
 		}
@@ -195,22 +202,18 @@ impl Packer {
 	
 	pub fn add( &mut self, w: i32, h: i32 ) {
 		self.used_rects.push( shapes::Rect{ x: 0, y: 0, w: w, h: h } );
-		self.free_rects_sorted = false;
 	}
 	
 	pub fn pack( &mut self ) -> bool {
-		// sort used rects
-		if self.free_rects_sorted == false {
-			self.used_rects.sort_unstable_by_key( |r| r.w * r.h );
-			self.free_rects_sorted = true;
-		}
 		let mut new_results: Vec<PackResult> = vec!();
 		let mut free_rects: Vec<shapes::Rect> = vec!();
 		free_rects.push( shapes::Rect{ x: 0, y:0, w: self.w, h: self.h } );
 		new_results.reserve( self.results.len() );
-		for used_rect in self.used_rects.iter().rev() {
+		let mut index = 0;
+		for used_rect in self.used_rects.iter() {
 //			println!( "used rect {:?}", used_rect.w * used_rect.h );
-			let result = self.attempt_pack( used_rect.w, used_rect.h, &mut free_rects );
+			let result = self.attempt_pack( used_rect.w, used_rect.h, &mut free_rects, index );
+			index = index + 1;
 			let cont = match result {
 				None => {
 					false
