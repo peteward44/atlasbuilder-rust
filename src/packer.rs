@@ -22,6 +22,52 @@ fn rect_intersects( a: &shapes::Rect, b: &shapes::Rect ) -> bool {
 		|| a.y + a.h <= b.y )
 }
 
+fn punch_hole_in_rect( parent: &shapes::Rect, hole: &shapes::Rect, new_rects: &mut Vec<shapes::Rect> ) {
+	if hole.x < parent.x + parent.w && hole.x + hole.w > parent.x {
+		// new node at top side of the used node.
+		if hole.y > parent.y && hole.y < parent.y + parent.h {
+			new_rects.push( shapes::Rect{
+				x: parent.x,
+				y: parent.y,
+				w: parent.w,
+				h: hole.y - parent.y
+			} );
+		}
+		
+		// New node at the bottom side of the used node
+		if hole.y + hole.h < parent.y + parent.h {
+			new_rects.push( shapes::Rect{
+				x: parent.x,
+				y: hole.y + hole.h,
+				w: parent.w,
+				h: parent.y + parent.h - hole.y - hole.h
+			} );
+		}
+	}
+
+	if hole.y < parent.y + parent.h && hole.y + hole.h > parent.y {
+		// new node at the left side of the used node.
+		if hole.x > parent.x && hole.x < parent.x + parent.w {
+			new_rects.push( shapes::Rect{
+				x: parent.x,
+				y: parent.y,
+				w: hole.x - parent.x,
+				h: parent.h
+			} );
+		}
+		
+		// new node at the right side of the used node
+		if hole.x + hole.w < parent.x + parent.w {
+			new_rects.push( shapes::Rect{
+				x: hole.x + hole.w,
+				y: parent.y,
+				w: parent.x + parent.w - hole.x - hole.w,
+				h: parent.h
+			} );
+		}
+	}
+}
+
 pub struct Packer {
 	w: i32,
 	h: i32,
@@ -30,15 +76,16 @@ pub struct Packer {
 	allow_rotate: bool,
 	used_rects: Vec<shapes::Rect>,
 	free_rects: Vec<shapes::Rect>,
+	padding: i32,
 	results: Vec<PackResult>
 }
 
 impl Packer {
-	pub fn new( w: i32, h: i32, allow_grow: bool, allow_rotate: bool ) -> Packer {
+	pub fn new( w: i32, h: i32, allow_grow: bool, allow_rotate: bool, padding: i32 ) -> Packer {
 		let w_use = if allow_grow { 128 } else { w };
 		let h_use = if allow_grow { 128 } else { h };
 		let mut free = vec!();
-		free.push( shapes::Rect{ x: 0, y:0, w: w_use, h: h_use } );
+		free.push( shapes::Rect{ x: padding, y: padding, w: w_use - padding, h: h_use - padding } );
 		Packer{
 			w: w_use,
 			h: h_use,
@@ -47,6 +94,7 @@ impl Packer {
 			used_rects: vec!(),
 			free_rects: free,
 			allow_rotate: allow_rotate,
+			padding: padding,
 			results: vec!()
 		}
 	}
@@ -61,6 +109,8 @@ impl Packer {
 		let mut best_long_side_fit = std::i32::MAX;
 		let mut best_rect: shapes::Rect = shapes::Rect{ x:0, y:0, w:0, h: 0 };
 		let mut best_rotated: bool = false;
+		let mut parent_width = 0;
+		let mut parent_height = 0;
 		
 		for rect in free_rects.iter() {
 			// Try to place the rectangle in upright (non-flipped) orientation
@@ -77,6 +127,8 @@ impl Packer {
 					best_short_side_fit = short_side_fit;
 					best_long_side_fit = long_side_fit;
 					best_rotated = false;
+					parent_width = rect.w;
+					parent_height = rect.h;
 				}
 			}
 
@@ -101,7 +153,9 @@ impl Packer {
 			println!("No space in atlas");
 			None
 		} else {
-//			println!("Found rect.x={:?} rect.y={:?} rect.w={:?} rect.h={:?}", best_rect.x, best_rect.y, best_rect.w, best_rect.h);
+			println!("Found rect.x={:?} rect.y={:?} rect.w={:?} rect.h={:?}", best_rect.x, best_rect.y, best_rect.w, best_rect.h);
+			println!("(Parent) rect.w={:?} rect.h={:?}", parent_width, parent_height );
+			
 			Some( PackResult{
 				rect: best_rect, rotated: best_rotated
 			} )
@@ -109,57 +163,16 @@ impl Packer {
 	}
 
 	fn attempt_pack( &self, w: i32, h: i32, free_rects: &mut Vec<shapes::Rect>, index: i32 ) -> Option<PackResult> {
-		let result_option = self.find_best_free_rect( w, h, free_rects );
+		println!( "attempt_pack w={:?} h={:?} self.padding={:?}", w, h, self.padding );
+		let mut result_option = self.find_best_free_rect( w + self.padding, h + self.padding, free_rects );
 		match result_option {
-			Some( result ) => {
+			Some( mut result ) => {
 				let mut new_rects: Vec<shapes::Rect> = vec!();
 				free_rects.retain( |free_rect| {
 					if !rect_intersects( free_rect, &result.rect ) {
 						return true;
 					}
-					if result.rect.x < free_rect.x + free_rect.w && result.rect.x + result.rect.w > free_rect.x {
-						// new node at top side of the used node.
-						if result.rect.y > free_rect.y && result.rect.y < free_rect.y + free_rect.h {
-							new_rects.push( shapes::Rect{
-								x: free_rect.x,
-								y: free_rect.y,
-								w: free_rect.w,
-								h: result.rect.y - free_rect.y
-							} );
-						}
-						
-						// New node at the bottom side of the used node
-						if result.rect.y + result.rect.h < free_rect.y + free_rect.h {
-							new_rects.push( shapes::Rect{
-								x: free_rect.x,
-								y: result.rect.y + result.rect.h,
-								w: free_rect.w,
-								h: free_rect.y + free_rect.h - result.rect.y - result.rect.h
-							} );
-						}
-					}
-					
-					if result.rect.y < free_rect.y + free_rect.h && result.rect.y + result.rect.h > free_rect.y {
-						// new node at the left side of the used node.
-						if result.rect.x > free_rect.x && result.rect.x < free_rect.x + free_rect.w {
-							new_rects.push( shapes::Rect{
-								x: free_rect.x,
-								y: free_rect.y,
-								w: result.rect.x - free_rect.x,
-								h: free_rect.h
-							} );
-						}
-						
-						// new node at the right side of the used node
-						if result.rect.x + result.rect.w < free_rect.x + free_rect.w {
-							new_rects.push( shapes::Rect{
-								x: result.rect.x + result.rect.w,
-								y: free_rect.y,
-								w: free_rect.x + free_rect.w - result.rect.x - result.rect.w,
-								h: free_rect.h
-							} );
-						}
-					}
+					punch_hole_in_rect( free_rect, &result.rect, &mut new_rects );
 					return false;
 				} );
 				
@@ -172,6 +185,8 @@ impl Packer {
 //				outputdebug::outputFreeRects( self.w, self.h, free_rects, index );
 				
 //				println!( "result.rect.x = {:?} result.rect.w = {:?} result.rect.y = {:?} result.rect.h = {:?}", result.rect.x, result.rect.w, result.rect.y, result.rect.h );
+				result.rect.w -= self.padding;
+				result.rect.h -= self.padding;
 				Some( result )
 			}
 			None => {
@@ -194,7 +209,6 @@ impl Packer {
 			}
 		}
 		removed.sort_unstable();
-		println!( "removed {:?}", removed );
 		for index in removed.iter().rev() {
 			free_rects.remove( *index );
 		}
@@ -207,11 +221,10 @@ impl Packer {
 	pub fn pack( &mut self ) -> bool {
 		let mut new_results: Vec<PackResult> = vec!();
 		let mut free_rects: Vec<shapes::Rect> = vec!();
-		free_rects.push( shapes::Rect{ x: 0, y:0, w: self.w, h: self.h } );
+		free_rects.push( shapes::Rect{ x: self.padding, y: self.padding, w: self.w - self.padding, h: self.h - self.padding } );
 		new_results.reserve( self.results.len() );
 		let mut index = 0;
 		for used_rect in self.used_rects.iter() {
-//			println!( "used rect {:?}", used_rect.w * used_rect.h );
 			let result = self.attempt_pack( used_rect.w, used_rect.h, &mut free_rects, index );
 			index = index + 1;
 			let cont = match result {
@@ -219,6 +232,7 @@ impl Packer {
 					false
 				},
 				Some( resultx ) => {
+					println!( "used rect x={:?} y={:?} w={:?} h={:?}", resultx.rect.x, resultx.rect.y, resultx.rect.w, resultx.rect.h );
 					new_results.push( resultx );
 					true
 				},

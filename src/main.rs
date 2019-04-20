@@ -49,6 +49,11 @@ fn operate() -> std::result::Result<(), failure::Error> {
 			.long("json")
 			.takes_value(true)
 			.help("Output filename for .json file"))
+		.arg(Arg::with_name("padding")
+			.short("p")
+			.long("padding")
+			.takes_value(true)
+			.help("Pixel padding inbetween subimages"))
 		.arg(Arg::with_name("input")
 			.help("Image filenames to add to atlas")
 			.required(true)
@@ -57,14 +62,15 @@ fn operate() -> std::result::Result<(), failure::Error> {
 			.index(1))
 		.get_matches();
 	let input_filenames: Vec<PathBuf> = parse_input_filenames::parse( matches.values_of("input").unwrap().collect() )?;
-	let output_width = matches.value_of("width").unwrap_or("2048").parse::<i32>().unwrap();
-	let output_height = matches.value_of("height").unwrap_or("2048").parse::<i32>().unwrap();
+	let output_width = matches.value_of("width").unwrap_or("4096").parse::<i32>().unwrap();
+	let output_height = matches.value_of("height").unwrap_or("4096").parse::<i32>().unwrap();
+	let padding = matches.value_of("padding").unwrap_or("2").parse::<i32>().unwrap();
 	let output_filename = std::path::Path::new(matches.value_of("output").unwrap_or("out.png"));
 	let output_json_filename = std::path::Path::new(matches.value_of("json").unwrap_or("out.json"));
 	let allow_rotation = !matches.is_present("rotation-disable");
 	let allow_grow = !matches.is_present("fixed-size");
 
-	let mut packer = packer::Packer::new( output_width, output_height, allow_grow, allow_rotation );
+	let mut packer = packer::Packer::new( output_width, output_height, allow_grow, allow_rotation, padding );
 
 	println!( "Calculating rects..." );
 	let mut inputs: Vec<inputimage::InputImage> = vec!();
@@ -79,7 +85,7 @@ fn operate() -> std::result::Result<(), failure::Error> {
 	inputs.sort_by_key( |r| r.vw * r.vh );
 	inputs.reverse();
 
-	for input in inputs.iter() {	
+	for input in inputs.iter() {
 		packer.add( input.vw, input.vh );
 	}
 
@@ -95,7 +101,7 @@ fn operate() -> std::result::Result<(), failure::Error> {
 	for pack_result_index in 0..pack_results.len() {
 		let pack_result: &packer::PackResult = &pack_results[pack_result_index];
 		let input: &inputimage::InputImage = &inputs[pack_result_index];
-		println!( "Copying sub image {:?}", input.name );
+		println!( "Copying sub image {:?} x={:?} y={:?} w={:?} h={:?}", input.name, pack_result.rect.x, pack_result.rect.y, pack_result.rect.w, pack_result.rect.h );
 		output.add_input( &input, pack_result.rect.x, pack_result.rect.y, pack_result.rotated );
 		output_meta.add_input( &input, pack_result.rect.x, pack_result.rect.y, pack_result.rotated );
 	}
