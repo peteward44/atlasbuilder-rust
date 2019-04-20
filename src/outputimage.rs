@@ -1,7 +1,15 @@
 extern crate image;
+extern crate png;
+extern crate oxipng;
 
 use super::inputimage;
-
+// For reading and opening files
+use std::path::Path;
+use std::fs::File;
+use std::io::BufWriter;
+// To use encoder.set()
+use png::HasParameters;
+use oxipng::*;
 
 pub struct OutputImage {
 	pub data: Vec<u8>,
@@ -38,7 +46,22 @@ impl OutputImage {
 	}
 	
 	pub fn save( &self, filename: &std::path::Path ) -> std::result::Result<(), std::io::Error> {
-		image::save_buffer( filename, &self.data, self.w as u32, self.h as u32, image::RGBA(8))
+//		image::save_buffer( filename, &self.data, self.w as u32, self.h as u32, image::RGBA(8))
+
+		{
+			let file = File::create( filename ).unwrap();
+			let ref mut w = BufWriter::new(file);
+
+			let mut encoder = png::Encoder::new(w, self.w as u32, self.h as u32); // Width is 2 pixels and height is 1.
+			encoder.set(png::ColorType::RGBA).set(png::BitDepth::Eight).set(png::Compression::Best);
+			let mut writer = encoder.write_header().unwrap();
+			writer.write_image_data( &self.data ).unwrap(); // Save
+		}
+		// oxipng::optimize_from_memory
+		let mut options: oxipng::Options = Default::default();
+	//	options.deflate = oxipng::Deflaters::Zopfli;	
+		oxipng::optimize( &oxipng::InFile::Path( filename.to_path_buf() ), &oxipng::OutFile::Path( None ), &options );
+		Ok(())
 	}
 }
 
