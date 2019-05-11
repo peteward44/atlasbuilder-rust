@@ -19,9 +19,9 @@ fn draw_rect( data: &mut Vec<u8>, pitch: i32, rect: &shapes::Rect ) {
 	let r = range.sample( &mut rng ) as u8;
 	let g = range.sample( &mut rng ) as u8;
 	let b = range.sample( &mut rng ) as u8;
-	for x in (0..rect.w) {
+	for x in 0..rect.w {
 		// top line
-		let pos = (x + rect.x + (rect.y * pitch));
+		let pos = x + rect.x + (rect.y * pitch);
 		if pos >= data.len() as i32 {
 			println!( "out of bounds {:?} ({:?})", pos, data.len() );
 			return;
@@ -34,7 +34,7 @@ fn draw_rect( data: &mut Vec<u8>, pitch: i32, rect: &shapes::Rect ) {
 		write_pixel( data, x + rect.x, rect.y + rect.h - 2, pitch, r, g, b );
 	}
 
-	for y in (0..rect.h) {
+	for y in 0..rect.h {
 		// left line
 		write_pixel( data, rect.x, rect.y + y, pitch, r, g, b );
 		write_pixel( data, rect.x + 1, rect.y + y, pitch, r, g, b );
@@ -46,7 +46,7 @@ fn draw_rect( data: &mut Vec<u8>, pitch: i32, rect: &shapes::Rect ) {
 	
 }
 
-pub fn outputFreeRects( w: i32, h: i32, free_rects: &mut Vec<shapes::Rect>, index: i32 ) {
+pub fn output_free_rects( w: i32, h: i32, free_rects: &mut Vec<shapes::Rect>, index: i32 ) -> std::result::Result<(), failure::Error> {
 	let filename = format!( "debug{:?}.png", index );
 	let size = w*h*4;
 	let mut data: Vec<u8> = vec![0; size as usize];
@@ -54,5 +54,6 @@ pub fn outputFreeRects( w: i32, h: i32, free_rects: &mut Vec<shapes::Rect>, inde
 		println!( "w={:?} h={:?} rect.x={:?} rect.y={:?} rect.w={:?} rect.h={:?}", w, h, rect.x, rect.y, rect.w, rect.h );
 		draw_rect( &mut data, w, &rect,  );
 	}
-	image::save_buffer( filename, &data, w as u32, h as u32, image::RGBA(8));
+	image::save_buffer( filename, &data, w as u32, h as u32, image::RGBA(8))?;
+	Ok(())
 }

@@ -4,7 +4,6 @@ extern crate oxipng;
 
 use super::inputimage;
 // For reading and opening files
-use std::path::Path;
 use std::fs::File;
 use std::io::BufWriter;
 // To use encoder.set()
@@ -58,7 +57,7 @@ impl OutputImage {
 			writer.write_image_data( &self.data ).unwrap(); // Save
 		}
 		// oxipng::optimize_from_memory
-		let mut options: oxipng::Options = Default::default();
+		let options: oxipng::Options = Default::default();
 	//	options.deflate = oxipng::Deflaters::Zopfli;
 	// pub fn optimize_from_memory(data: &[u8], opts: &Options) -> PngResult<Vec<u8>>
 		oxipng::optimize( &oxipng::InFile::Path( filename.to_path_buf() ), &oxipng::OutFile::Path( None ), &options );

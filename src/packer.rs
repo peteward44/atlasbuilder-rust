@@ -1,7 +1,6 @@
 use std::cmp;
 use std::i32;
 use super::shapes;
-use super::outputdebug;
 
 pub struct PackResult {
 	pub rect: shapes::Rect,
@@ -162,9 +161,9 @@ impl Packer {
 		}
 	}
 
-	fn attempt_pack( &self, w: i32, h: i32, free_rects: &mut Vec<shapes::Rect>, index: i32 ) -> Option<PackResult> {
+	fn attempt_pack( &self, w: i32, h: i32, free_rects: &mut Vec<shapes::Rect> ) -> Option<PackResult> {
 		println!( "attempt_pack w={:?} h={:?} self.padding={:?}", w, h, self.padding );
-		let mut result_option = self.find_best_free_rect( w + self.padding, h + self.padding, free_rects );
+		let result_option = self.find_best_free_rect( w + self.padding, h + self.padding, free_rects );
 		match result_option {
 			Some( mut result ) => {
 				let mut new_rects: Vec<shapes::Rect> = vec!();
@@ -182,7 +181,7 @@ impl Packer {
 				
 				self.prune_free_rects( free_rects );
 				
-//				outputdebug::outputFreeRects( self.w, self.h, free_rects, index );
+//				outputdebug::outputFreeRects( self.w, self.h, free_rects );
 				
 //				println!( "result.rect.x = {:?} result.rect.w = {:?} result.rect.y = {:?} result.rect.h = {:?}", result.rect.x, result.rect.w, result.rect.y, result.rect.h );
 				result.rect.w -= self.padding;
@@ -223,10 +222,8 @@ impl Packer {
 		let mut free_rects: Vec<shapes::Rect> = vec!();
 		free_rects.push( shapes::Rect{ x: self.padding, y: self.padding, w: self.w - self.padding, h: self.h - self.padding } );
 		new_results.reserve( self.results.len() );
-		let mut index = 0;
 		for used_rect in self.used_rects.iter() {
-			let result = self.attempt_pack( used_rect.w, used_rect.h, &mut free_rects, index );
-			index = index + 1;
+			let result = self.attempt_pack( used_rect.w, used_rect.h, &mut free_rects );
 			let cont = match result {
 				None => {
 					false
