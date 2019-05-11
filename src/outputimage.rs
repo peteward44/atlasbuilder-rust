@@ -23,7 +23,7 @@ impl OutputImage {
 				let src_row = (img.vy+row)*(img.w*4) + img.vx*4;
 				for col in 0..img.vw {
 					let src = src_row + col*4;
-					let dst_row = (dy+col)*self.w*4; // transpose col / row
+					let dst_row = (dy+(img.vw-col-1))*self.w*4; // transpose col / row
 					let dst = dst_row + (dx+row)*4;
 					self.data[dst as usize..(dst+4) as usize].copy_from_slice( &img.data[src as usize..(src+4) as usize] );
 				}
