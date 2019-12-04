@@ -98,9 +98,9 @@ impl Packer {
 		}
 	}
 	
-	pub fn get_free_rects( &self ) -> &Vec<shapes::Rect> {
-		&self.free_rects
-	}
+//	pub fn get_free_rects( &self ) -> &Vec<shapes::Rect> {
+//		&self.free_rects
+//	}
 
 	fn find_best_free_rect( &self, w: i32, h: i32, free_rects: &Vec<shapes::Rect> ) -> Option<PackResult> {
 		// Find best free rectangle to insert target rect into
