@@ -290,48 +290,48 @@ impl Packer {
 #[cfg(test)]
 mod test_packer {
 
-	fn assert_pack_result( result: &super::PackResult, x: i32, y: i32, w: i32, h: i32, rotated: bool ) {
+	fn assert_pack_result( result: &super::PackResult, x: i32, y: i32, w: i32, h: i32, rotated: bool, message: &str ) {
 		println!( "x={:?} y={:?} w={:?} h={:?}", result.rect.x, result.rect.y, result.rect.w, result.rect.h );
-		assert_eq!( result.rect.x, x );
-		assert_eq!( result.rect.y, y );
-		assert_eq!( result.rect.w, w );
-		assert_eq!( result.rect.h, h );
-		assert_eq!( result.rotated, rotated );
+		assert_eq!( result.rect.x, x, "{} - x", message );
+		assert_eq!( result.rect.y, y, "{} - y", message );
+		assert_eq!( result.rect.w, w, "{} - w", message );
+		assert_eq!( result.rect.h, h, "{} - h", message );
+		assert_eq!( result.rotated, rotated, "{}", message );
 	}
 
 	#[test]
 	fn basic_packer_test() {
-		let mut packer = super::Packer::new( 256, 256, false, false );
+		let mut packer = super::Packer::new( 256, 256, false, false, 0 );
 
 		packer.add( 10, 10 );
 		let result1 = packer.pack();
 		assert_eq!( result1, true );
-		assert_pack_result( &packer.get_results()[0], 0, 0, 10, 10, false );
+		assert_pack_result( &packer.get_results()[0], 0, 0, 10, 10, false, "Test 1" );
 
 		packer.add( 10, 10 );
 		let result2 = packer.pack();
 		assert_eq!( result2, true );
-		assert_pack_result( &packer.get_results()[1], 0, 10, 10, 10, false );
+		assert_pack_result( &packer.get_results()[1], 0, 10, 10, 10, false, "Test 2" );
 
 		packer.add( 50, 10 );
 		let result3 = packer.pack();
 		assert_eq!( result3, true );
-		assert_pack_result( &packer.get_results()[2], 60, 0, 10, 10, false );
+		assert_pack_result( &packer.get_results()[2], 10, 0, 50, 10, false, "Test 3" );
 			
 		packer.add( 23, 75 );
 		let result5 = packer.pack();
 		assert_eq!( result5, true );
-		assert_pack_result( &packer.get_results()[3], 23, 95, 10, 10, false );
+		assert_pack_result( &packer.get_results()[3], 0, 20, 23, 75, false, "Test 4" );
 
 		packer.add( 50, 50 );
 		let result4 = packer.pack();
 		assert_eq!( result4, true );
-		assert_pack_result( &packer.get_results()[4], 50, 50, 10, 10, false );
+		assert_pack_result( &packer.get_results()[4], 0, 95, 50, 50, false, "Test 5" );
 	}
 	
 	#[test]
 	fn automatic_grow_test() {
-		let mut packer = super::Packer::new( 1024, 1024, true, false );
+		let mut packer = super::Packer::new( 1024, 1024, true, false, 0 );
 		assert_eq!( packer.w, 128 );
 		assert_eq!( packer.h, 128 );
 		packer.add( 200, 100 );
@@ -339,12 +339,11 @@ mod test_packer {
 		assert_eq!( result1, false );
 		let grow_result = packer.grow();
 		assert_eq!( grow_result, true );
-		assert_eq!( packer.w, 128 );
+		assert_eq!( packer.w, 256 );
 		assert_eq!( packer.h, 256 );
-		packer.add( 100, 200 );
 		let result2 = packer.pack();
 		assert_eq!( result2, true );
-		assert_pack_result( &packer.get_results()[0], 0, 0, 100, 200, false );
+		assert_pack_result( &packer.get_results()[0], 0, 0, 200, 100, false, "Test 1" );
 	}
 	
 	#[test]
@@ -371,7 +370,7 @@ mod test_packer {
 			super::shapes::Rect{ x: 0, y: 0, w: 273, h: 367 },
 			super::shapes::Rect{ x: 0, y: 0, w: 302, h: 396 }
 		];
-		let mut packer = super::Packer::new( 4096, 4096, false, true );
+		let mut packer = super::Packer::new( 4096, 4096, false, true, 0 );
 		for rect in rects {
 			packer.add( rect.w, rect.h );
 		}
@@ -381,7 +380,7 @@ mod test_packer {
 		for result in results {
 			println!( "x={:?} y={:?} w={:?} h={:?}", result.rect.x, result.rect.y, result.rect.w, result.rect.h );
 		}
-		assert_eq!( false, true );
+		//assert_eq!( false, true );
 	}
 }
 
