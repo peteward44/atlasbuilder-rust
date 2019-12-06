@@ -1,7 +1,7 @@
 extern crate serde;
 extern crate serde_json;
 #[macro_use] extern crate serde_derive;
-extern crate clap;
+#[macro_use] extern crate clap;
 #[macro_use] extern crate failure;
 
 mod inputimage;
@@ -17,8 +17,9 @@ use std::path::{ PathBuf };
 
 
 fn operate() -> std::result::Result<(), failure::Error> {
-	let matches = App::new("Atlasbuilder")
-		.version("1.0.0")
+	let matches = App::new("")
+		.version(crate_version!())
+		.version_short("v")
 		.author("Pete Ward <peteward44@gmail.com>")
 		.about("Builds texture atlas images with JSON output")
 		.arg(Arg::with_name("rotation-disable")
@@ -61,6 +62,7 @@ fn operate() -> std::result::Result<(), failure::Error> {
 			.takes_value(true)
 			.index(1))
 		.get_matches();
+
 	let input_filenames: Vec<PathBuf> = parse_input_filenames::parse( matches.values_of("input").unwrap().collect() )?;
 	let output_width = matches.value_of("width").unwrap_or("4096").parse::<i32>().unwrap();
 	let output_height = matches.value_of("height").unwrap_or("4096").parse::<i32>().unwrap();
