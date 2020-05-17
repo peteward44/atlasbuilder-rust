@@ -1,6 +1,6 @@
 [package]
 name = "atlasbuilder"
-version = "0.1.0"
+version = "3.0.0"
 authors = ["Pete Ward <peteward44@gmail.com>"]
 edition = "2018"
 
