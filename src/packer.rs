@@ -149,11 +149,11 @@ impl Packer {
 			}
 		}
 		if best_rect.w == 0 {
-		//	println!("No space in atlas");
+			debug!("No space in atlas");
 			None
 		} else {
-		//	println!("Found rect.x={:?} rect.y={:?} rect.w={:?} rect.h={:?}", best_rect.x, best_rect.y, best_rect.w, best_rect.h);
-		//	println!("(Parent) rect.w={:?} rect.h={:?}", parent_width, parent_height );
+			debug!("Found rect.x={:?} rect.y={:?} rect.w={:?} rect.h={:?}", best_rect.x, best_rect.y, best_rect.w, best_rect.h);
+			debug!("(Parent) rect.w={:?} rect.h={:?}", parent_width, parent_height );
 			
 			Some( PackResult{
 				rect: best_rect, rotated: best_rotated
@@ -162,7 +162,7 @@ impl Packer {
 	}
 
 	fn attempt_pack( &self, w: i32, h: i32, free_rects: &mut Vec<shapes::Rect> ) -> Option<PackResult> {
-		println!( "attempt_pack w={:?} h={:?} self.padding={:?}", w, h, self.padding );
+		debug!( "attempt_pack w={:?} h={:?} self.padding={:?}", w, h, self.padding );
 		let result_option = self.find_best_free_rect( w + self.padding, h + self.padding, free_rects );
 		match result_option {
 			Some( mut result ) => {
@@ -183,7 +183,7 @@ impl Packer {
 				
 //				outputdebug::outputFreeRects( self.w, self.h, free_rects );
 				
-//				println!( "result.rect.x = {:?} result.rect.w = {:?} result.rect.y = {:?} result.rect.h = {:?}", result.rect.x, result.rect.w, result.rect.y, result.rect.h );
+				debug!( "result.rect.x = {:?} result.rect.w = {:?} result.rect.y = {:?} result.rect.h = {:?}", result.rect.x, result.rect.w, result.rect.y, result.rect.h );
 				result.rect.w -= self.padding;
 				result.rect.h -= self.padding;
 				Some( result )
@@ -378,7 +378,7 @@ mod test_packer {
 		assert_eq!( pack_result, true );
 		let results = packer.get_results();
 		for result in results {
-			println!( "x={:?} y={:?} w={:?} h={:?}", result.rect.x, result.rect.y, result.rect.w, result.rect.h );
+			debug!( "x={:?} y={:?} w={:?} h={:?}", result.rect.x, result.rect.y, result.rect.w, result.rect.h );
 		}
 		//assert_eq!( false, true );
 	}
