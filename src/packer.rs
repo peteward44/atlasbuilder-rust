@@ -149,11 +149,11 @@ impl Packer {
 			}
 		}
 		if best_rect.w == 0 {
-			println!("No space in atlas");
+		//	println!("No space in atlas");
 			None
 		} else {
-			println!("Found rect.x={:?} rect.y={:?} rect.w={:?} rect.h={:?}", best_rect.x, best_rect.y, best_rect.w, best_rect.h);
-			println!("(Parent) rect.w={:?} rect.h={:?}", parent_width, parent_height );
+		//	println!("Found rect.x={:?} rect.y={:?} rect.w={:?} rect.h={:?}", best_rect.x, best_rect.y, best_rect.w, best_rect.h);
+		//	println!("(Parent) rect.w={:?} rect.h={:?}", parent_width, parent_height );
 			
 			Some( PackResult{
 				rect: best_rect, rotated: best_rotated
@@ -229,7 +229,7 @@ impl Packer {
 					false
 				},
 				Some( resultx ) => {
-					println!( "used rect x={:?} y={:?} w={:?} h={:?}", resultx.rect.x, resultx.rect.y, resultx.rect.w, resultx.rect.h );
+				//	println!( "used rect x={:?} y={:?} w={:?} h={:?}", resultx.rect.x, resultx.rect.y, resultx.rect.w, resultx.rect.h );
 					new_results.push( resultx );
 					true
 				},
