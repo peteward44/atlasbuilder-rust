@@ -54,6 +54,6 @@ pub fn output_free_rects( w: i32, h: i32, free_rects: &mut Vec<shapes::Rect>, in
 		println!( "w={:?} h={:?} rect.x={:?} rect.y={:?} rect.w={:?} rect.h={:?}", w, h, rect.x, rect.y, rect.w, rect.h );
 		draw_rect( &mut data, w, &rect,  );
 	}
-	image::save_buffer( filename, &data, w as u32, h as u32, image::RGBA(8))?;
+	image::save_buffer( filename, &data, w as u32, h as u32, image::ColorType::Rgba8)?;
 	Ok(())
 }

@@ -15,7 +15,7 @@ pub struct InputImage {
 impl InputImage {
 	pub fn load( filename: &str ) -> InputImage {
 		let imga = image::open( filename ).unwrap();
-		let img: image::ImageBuffer<image::Rgba<u8>, std::vec::Vec<u8>> = imga.to_rgba();
+		let img: image::ImageBuffer<image::Rgba<u8>, std::vec::Vec<u8>> = imga.into_rgba8();
 		let dims = img.dimensions();
 		let data = img.into_vec();
 		let w = dims.0 as i32;

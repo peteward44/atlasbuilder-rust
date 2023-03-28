@@ -1,7 +1,6 @@
 extern crate serde;
 extern crate serde_json;
 #[macro_use] extern crate serde_derive;
-#[macro_use] extern crate clap;
 #[macro_use] extern crate failure;
 #[macro_use] extern crate log;
 
@@ -13,65 +12,70 @@ mod packer;
 mod parse_input_filenames;
 mod outputdebug;
 
-use clap::{Arg, App};
+use clap::{Arg, Command};
 use std::path::{ PathBuf };
 
 
 fn operate() -> std::result::Result<(), failure::Error> {
-	let matches = App::new("")
-		.version(crate_version!())
-		.version_short("v")
+	let matches = Command::new("atlasbuilder")
+		//.version(crate_version!())
 		.author("Pete Ward <peteward44@gmail.com>")
 		.about("Builds texture atlas images with JSON output")
-		.arg(Arg::with_name("rotation-disable")
-			.short("r")
+		.arg(Arg::new("rotation-disable")
+			.short('r')
 			.long("rotation-disable")
 			.help("Disable sub image rotation"))
-		.arg(Arg::with_name("fixed-size")
-			.short("f")
+		.arg(Arg::new("fixed-size")
+			.short('f')
 			.long("fixed-size")
 			.help("Output image will be a fixed width / height instead of attempting to use as little as possible"))
-		.arg(Arg::with_name("width")
-			.short("w")
+		.arg(Arg::new("width")
 			.long("width")
-			.takes_value(true)
+			.num_args(1)
+			.default_value("4096")
+			.value_parser(clap::value_parser!(i32))
 			.help("Maximum width of output atlas - must be power of 2"))
-		.arg(Arg::with_name("height")
-			.short("h")
+		.arg(Arg::new("height")
 			.long("height")
-			.takes_value(true)
+			.num_args(1)
+			.default_value("4096")
+			.value_parser(clap::value_parser!(i32))
 			.help("Maximum height of output atlas - must be power of 2"))
-		.arg(Arg::with_name("output")
-			.short("o")
+		.arg(Arg::new("output")
+			.short('o')
 			.long("output")
-			.takes_value(true)
+			.num_args(1)
+			.default_value("out.png")
 			.help("Output filename for .png file"))
-		.arg(Arg::with_name("json")
-			.short("j")
+		.arg(Arg::new("json")
+			.short('j')
 			.long("json")
-			.takes_value(true)
+			.num_args(1)
+			.default_value("out.json")
 			.help("Output filename for .json file"))
-		.arg(Arg::with_name("padding")
-			.short("p")
+		.arg(Arg::new("padding")
+			.short('p')
 			.long("padding")
-			.takes_value(true)
+			.value_parser(clap::value_parser!(i32))
+			.num_args(1)
+			.default_value("2")
 			.help("Pixel padding inbetween subimages"))
-		.arg(Arg::with_name("input")
+		.arg(Arg::new("input")
 			.help("Image filenames to add to atlas")
 			.required(true)
-			.multiple(true)
-			.takes_value(true)
+			.num_args(1..)
 			.index(1))
 		.get_matches();
 
-	let input_filenames: Vec<PathBuf> = parse_input_filenames::parse( matches.values_of("input").unwrap().collect() )?;
-	let output_width = matches.value_of("width").unwrap_or("4096").parse::<i32>().unwrap();
-	let output_height = matches.value_of("height").unwrap_or("4096").parse::<i32>().unwrap();
-	let padding = matches.value_of("padding").unwrap_or("2").parse::<i32>().unwrap();
-	let output_filename = std::path::Path::new(matches.value_of("output").unwrap_or("out.png"));
-	let output_json_filename = std::path::Path::new(matches.value_of("json").unwrap_or("out.json"));
-	let allow_rotation = !matches.is_present("rotation-disable");
-	let allow_grow = !matches.is_present("fixed-size");
+	let raw_filenames = matches.get_many::<String>("input").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
+	let input_filenames: Vec<PathBuf> = parse_input_filenames::parse(raw_filenames)?;
+	let output_width = *matches.get_one::<i32>("width").expect("shouldn't happen");
+	let output_height = *matches.get_one::<i32>("height").expect("shouldn't happen");
+	let padding = *matches.get_one::<i32>("padding").expect("shouldn't happen");
+	let output_filename = std::path::Path::new(matches.get_one::<String>("output").expect("shouldn't happen"));
+	let output_json_filename = std::path::Path::new(matches.get_one::<String>("json").expect("shouldn't happen"));
+	let allow_rotation = !matches.get_flag("rotation-disable");
+	let allow_grow = !matches.get_flag("fixed-size");
 
 	let mut packer = packer::Packer::new( output_width, output_height, allow_grow, allow_rotation, padding );
 

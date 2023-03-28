@@ -49,7 +49,7 @@ impl OutputImage {
 			let ref mut w = BufWriter::new(file);
 
 			let mut encoder = png::Encoder::new(w, self.w as u32, self.h as u32); // Width is 2 pixels and height is 1.
-			encoder.set_color(png::ColorType::RGBA);
+			encoder.set_color(png::ColorType::Rgba);
 			encoder.set_depth(png::BitDepth::Eight);
 			encoder.set_compression(png::Compression::Best);
 			let mut writer = encoder.write_header().unwrap();
