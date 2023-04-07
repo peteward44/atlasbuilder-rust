@@ -1,46 +1,13 @@
 use pathdiff::diff_paths;
-use std::collections::HashMap;
+use tera::Tera;
 use super::shapes;
 use super::inputimage;
 
-#[derive(Serialize, Deserialize)]
-#[allow(non_snake_case)]
-struct JsonHashFrame {
-	rotated: bool,
-	trimmed: bool,
-	frame: shapes::Rect,
-	spriteSourceSize: shapes::Rect,
-	sourceSize: shapes::Size
-}
-
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize)]
 struct JsonHashMeta {
 	app: String,
 	image: String,
 	size: shapes::Size
-}
-
-#[derive(Serialize, Deserialize)]
-struct JsonHash {
-	frames: HashMap<String, JsonHashFrame>,
-	meta: JsonHashMeta
-}
-
-#[derive(Serialize, Deserialize)]
-#[allow(non_snake_case)]
-struct JsonArrayFrame {
-	filename: String,
-	rotated: bool,
-	trimmed: bool,
-	frame: shapes::Rect,
-	spriteSourceSize: shapes::Rect,
-	sourceSize: shapes::Size
-}
-
-#[derive(Serialize, Deserialize)]
-struct JsonArray {
-	frames: Vec<JsonArrayFrame>,
-	meta: JsonHashMeta
 }
 
 /*
@@ -100,10 +67,11 @@ struct JsonArray {
 */
 
 
-
+#[derive(Serialize)]
 struct SubImage {
-	pub name: std::path::PathBuf,
+	pub name: String,
 	pub rotated: bool,
+	pub trimmed: bool,
 	pub dest_x: i32,
 	pub dest_y: i32,
 	pub trimmed_x: i32,
@@ -137,10 +105,11 @@ impl OutputMeta {
 		return image_output_path.file_name().unwrap().to_str().unwrap().to_string();
 	}
 
-	pub fn add_input( &mut self, img: &inputimage::InputImage, dx: i32, dy: i32, rotated: bool ) {
+	pub fn add_input( &mut self, output_meta_root_dir: &std::path::Path, output_meta_filename_only: bool, img: &inputimage::InputImage, dx: i32, dy: i32, rotated: bool ) {
 		let rect = SubImage{
-			name: img.name.to_owned(),
+			name: self.calculate_input_name(output_meta_root_dir, output_meta_filename_only, img.name.as_path()),
 			rotated: rotated,
+			trimmed: true,
 			dest_x: dx,
 			dest_y: dy,
 			trimmed_x: img.vx,
@@ -154,7 +123,6 @@ impl OutputMeta {
 	}
 
 	pub fn save( &self, output_meta_root_dir: &std::path::Path, output_meta_filename_only: bool, filename: &std::path::Path, format: &str, image_output_path: &std::path::Path, output_width: i32, output_height: i32 ) -> std::result::Result<String, failure::Error> {
-		let json;
 		let meta = JsonHashMeta {
 			app: "https://github.com/peteward44/atlasbuilder-rust".to_string(),
 			image: self.calculate_output_name(output_meta_root_dir, output_meta_filename_only, image_output_path),
@@ -163,41 +131,14 @@ impl OutputMeta {
 				h: output_height
 			}
 		};
-		if format == "array" {
-			let mut data: JsonArray = JsonArray{
-				frames: Vec::new(),
-				meta: meta
-			};
-			for sub in &self.subs {
-				data.frames.push( JsonArrayFrame {
-					filename: self.calculate_input_name(output_meta_root_dir, output_meta_filename_only, sub.name.as_path()),
-					rotated: sub.rotated,
-					trimmed: true,
-					frame: shapes::Rect { x: sub.dest_x, y: sub.dest_y, w: sub.trimmed_w, h: sub.trimmed_h },
-					spriteSourceSize: shapes::Rect { x: sub.trimmed_x, y: sub.trimmed_y, w: sub.trimmed_w, h: sub.trimmed_h },
-					sourceSize: shapes::Size { w: sub.pretrimmed_w, h: sub.pretrimmed_h }
-				} );
-			}
-			json = serde_json::to_string( &data )?;
-		} else {
-			let mut data: JsonHash = JsonHash{
-				frames: HashMap::new(),
-				meta: meta
-			};
-			for sub in &self.subs {
-				data.frames.insert( self.calculate_input_name(output_meta_root_dir, output_meta_filename_only, sub.name.as_path()), JsonHashFrame {
-					rotated: sub.rotated,
-					trimmed: true,
-					frame: shapes::Rect { x: sub.dest_x, y: sub.dest_y, w: sub.trimmed_w, h: sub.trimmed_h },
-					spriteSourceSize: shapes::Rect { x: sub.trimmed_x, y: sub.trimmed_y, w: sub.trimmed_w, h: sub.trimmed_h },
-					sourceSize: shapes::Size { w: sub.pretrimmed_w, h: sub.pretrimmed_h }
-				} );
-			}
-			json = serde_json::to_string_pretty( &data )?;
-		}
 		
-		std::fs::write( filename, json.to_string() )?;
+		let tera = Tera::new("templates/**/*.tmpl").unwrap();
+		let mut context = tera::Context::new();
+		context.insert("meta", &meta);
+		context.insert("frames", &self.subs);
 
-		Ok(json)
+		let result = tera.render("json_hash.tmpl", &context)?;
+		std::fs::write( filename, result.to_owned() )?;
+		Ok(result)
 	}
 }

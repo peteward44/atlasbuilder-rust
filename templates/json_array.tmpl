@@ -1,0 +1,33 @@
+{
+  "frames": [
+    {% for frame in frames %}{
+      "filename": "{{ frame.name }}",
+      "rotated": {% if frame.rotated %}true{% else %}false{% endif %},
+      "trimmed": {% if frame.trimmed %}true{% else %}false{% endif %},
+      "frame": {
+        "x": {{ frame.dest_x }},
+        "y": {{ frame.dest_y }},
+        "w": {{ frame.trimmed_w }},
+        "h": {{ frame.trimmed_h }}
+      },
+      "spriteSourceSize": {
+        "x": {{ frame.trimmed_x }},
+        "y": {{ frame.trimmed_y }},
+        "w": {{ frame.trimmed_w }},
+        "h": {{ frame.trimmed_h }}
+      },
+      "sourceSize": {
+        "w": {{ frame.pretrimmed_w }},
+        "h": {{ frame.pretrimmed_h }}
+      }
+	}{% if not loop.last %},{% endif %}{% endfor %}
+  ],
+  "meta": {
+    "app": "{{ meta.app }}",
+    "image": "{{ meta.image }}",
+    "size": {
+      "w": {{ meta.size.w }},
+      "h": {{ meta.size.h }}
+    }
+  }
+}

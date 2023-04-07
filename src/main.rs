@@ -127,7 +127,7 @@ fn operate() -> std::result::Result<(), failure::Error> {
 		let input: &inputimage::InputImage = &inputs[pack_result_index];
 		println!( "Copying sub image {:?} x={:?} y={:?} w={:?} h={:?}", input.name, pack_result.rect.x, pack_result.rect.y, pack_result.rect.w, pack_result.rect.h );
 		output.add_input( &input, pack_result.rect.x, pack_result.rect.y, pack_result.rotated );
-		output_meta.add_input( &input, pack_result.rect.x, pack_result.rect.y, pack_result.rotated );
+		output_meta.add_input( output_meta_root_dir, output_meta_filename_only,  &input, pack_result.rect.x, pack_result.rect.y, pack_result.rotated );
 	}
 	println!( "Outputting final image {:?}", output_filename );
 	output.save( output_filename )?;
