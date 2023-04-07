@@ -3,6 +3,7 @@ extern crate serde_json;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate failure;
 #[macro_use] extern crate log;
+#[macro_use] extern crate clap;
 
 mod inputimage;
 mod outputmeta;
@@ -18,53 +19,67 @@ use std::path::{ PathBuf };
 
 fn operate() -> std::result::Result<(), failure::Error> {
 	let matches = Command::new("atlasbuilder")
-		//.version(crate_version!())
 		.author("Pete Ward <peteward44@gmail.com>")
+		.version(crate_version!())
 		.about("Builds texture atlas images with JSON output")
 		.arg(Arg::new("rotation-disable")
 			.short('r')
 			.long("rotation-disable")
+			.action(clap::ArgAction::SetTrue)
 			.help("Disable sub image rotation"))
 		.arg(Arg::new("fixed-size")
 			.short('f')
 			.long("fixed-size")
+			.action(clap::ArgAction::SetTrue)
 			.help("Output image will be a fixed width / height instead of attempting to use as little as possible"))
 		.arg(Arg::new("width")
 			.long("width")
-			.num_args(1)
+			.action(clap::ArgAction::Set)
 			.default_value("4096")
 			.value_parser(clap::value_parser!(i32))
 			.help("Maximum width of output atlas - must be power of 2"))
 		.arg(Arg::new("height")
 			.long("height")
-			.num_args(1)
+			.action(clap::ArgAction::Set)
 			.default_value("4096")
 			.value_parser(clap::value_parser!(i32))
 			.help("Maximum height of output atlas - must be power of 2"))
 		.arg(Arg::new("output")
 			.short('o')
 			.long("output")
-			.num_args(1)
+			.action(clap::ArgAction::Set)
 			.default_value("out.png")
 			.help("Output filename for .png file"))
 		.arg(Arg::new("json")
 			.short('j')
 			.long("json")
-			.num_args(1)
+			.action(clap::ArgAction::Set)
 			.default_value("out.json")
 			.help("Output filename for .json file"))
 		.arg(Arg::new("padding")
 			.short('p')
 			.long("padding")
 			.value_parser(clap::value_parser!(i32))
-			.num_args(1)
+			.action(clap::ArgAction::Set)
 			.default_value("2")
 			.help("Pixel padding inbetween subimages"))
 		.arg(Arg::new("input")
 			.help("Image filenames to add to atlas")
 			.required(true)
-			.num_args(1..)
+			.multiple(true)
+			.action(clap::ArgAction::Append)
 			.index(1))
+		.arg(Arg::new("output-name-root-dir")
+			.long("output-name-root-dir")
+			.action(clap::ArgAction::Set)
+			.default_value("")
+			.conflicts_with("output-name-filename-only")
+			.help("Root directory to use for all input paths outputted to the meta data. Incompatible with --output-name-filename-only flag"))
+		.arg(Arg::new("output-name-filename-only")
+			.long("output-name-filename-only")
+			.action(clap::ArgAction::SetTrue)
+			.conflicts_with("output-name-root-dir")
+			.help("Input paths outputed to the meta data only contain the filename. Incompatible with --output-name-root-dir flag"))
 		.get_matches();
 
 	let raw_filenames = matches.get_many::<String>("input").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
@@ -72,6 +87,8 @@ fn operate() -> std::result::Result<(), failure::Error> {
 	let output_width = *matches.get_one::<i32>("width").expect("shouldn't happen");
 	let output_height = *matches.get_one::<i32>("height").expect("shouldn't happen");
 	let padding = *matches.get_one::<i32>("padding").expect("shouldn't happen");
+	let output_meta_root_dir = std::path::Path::new(matches.get_one::<String>("output-name-root-dir").expect("shouldn't happen"));
+	let output_meta_filename_only = matches.get_flag("output-name-filename-only");
 	let output_filename = std::path::Path::new(matches.get_one::<String>("output").expect("shouldn't happen"));
 	let output_json_filename = std::path::Path::new(matches.get_one::<String>("json").expect("shouldn't happen"));
 	let allow_rotation = !matches.get_flag("rotation-disable");
@@ -82,7 +99,7 @@ fn operate() -> std::result::Result<(), failure::Error> {
 	println!( "Calculating rects..." );
 	let mut inputs: Vec<inputimage::InputImage> = vec!();
 	for filename in input_filenames.iter() {
-		let mut input = inputimage::InputImage::load( filename.to_str().unwrap() );
+		let mut input = inputimage::InputImage::load( filename );
 		input.trim();
 		println!( "{{ w: {:?}, h: {:?} }}", input.vw, input.vh );
 		inputs.push( input );
@@ -114,7 +131,7 @@ fn operate() -> std::result::Result<(), failure::Error> {
 	}
 	println!( "Outputting final image {:?}", output_filename );
 	output.save( output_filename )?;
-	output_meta.save( output_json_filename, "hash", output_filename.to_str().unwrap(), output.w, output.h )?;
+	output_meta.save( output_meta_root_dir, output_meta_filename_only, output_json_filename, "hash", output_filename, output.w, output.h )?;
 	Ok(())
 }
 
@@ -122,7 +139,10 @@ fn operate() -> std::result::Result<(), failure::Error> {
 fn main() {
 	let result = operate();
 	match result {
-		Err( e ) => println!("Error creating atlas {:?}", e ),
+		Err( e ) => {
+			eprintln!("Error: {}", e);
+			std::process::exit(1);
+		}
 		Ok(_json) => println!("Complete!")
 	}
 }

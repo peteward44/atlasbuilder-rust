@@ -1,3 +1,4 @@
+use pathdiff::diff_paths;
 use std::collections::HashMap;
 use super::shapes;
 use super::inputimage;
@@ -101,7 +102,7 @@ struct JsonArray {
 
 
 struct SubImage {
-	pub name: String,
+	pub name: std::path::PathBuf,
 	pub rotated: bool,
 	pub dest_x: i32,
 	pub dest_y: i32,
@@ -122,9 +123,23 @@ impl OutputMeta {
 		OutputMeta { subs: vec!() }
 	}
 
+	fn calculate_input_name( &self, output_meta_root_dir: &std::path::Path, output_meta_filename_only: bool, image_input_path: &std::path::Path ) -> String {
+		if output_meta_filename_only {
+			return image_input_path.file_name().unwrap().to_str().unwrap().to_string();
+		}
+		if output_meta_root_dir.eq(std::path::Path::new("")) {
+			return image_input_path.to_str().expect("invalid path").to_owned();
+		}
+		return diff_paths(image_input_path, output_meta_root_dir).unwrap().to_str().unwrap().to_owned();
+	}
+
+	fn calculate_output_name( &self, output_meta_root_dir: &std::path::Path, output_meta_filename_only: bool, image_output_path: &std::path::Path ) -> String {
+		return image_output_path.file_name().unwrap().to_str().unwrap().to_string();
+	}
+
 	pub fn add_input( &mut self, img: &inputimage::InputImage, dx: i32, dy: i32, rotated: bool ) {
 		let rect = SubImage{
-			name: img.name.to_string(),
+			name: img.name.to_owned(),
 			rotated: rotated,
 			dest_x: dx,
 			dest_y: dy,
@@ -138,11 +153,11 @@ impl OutputMeta {
 		self.subs.push( rect );
 	}
 
-	pub fn save( &self, filename: &std::path::Path, format: &str, output_name: &str, output_width: i32, output_height: i32 ) -> std::result::Result<String, failure::Error> {
+	pub fn save( &self, output_meta_root_dir: &std::path::Path, output_meta_filename_only: bool, filename: &std::path::Path, format: &str, image_output_path: &std::path::Path, output_width: i32, output_height: i32 ) -> std::result::Result<String, failure::Error> {
 		let json;
 		let meta = JsonHashMeta {
 			app: "https://github.com/peteward44/atlasbuilder-rust".to_string(),
-			image: output_name.to_string(),
+			image: self.calculate_output_name(output_meta_root_dir, output_meta_filename_only, image_output_path),
 			size: shapes::Size {
 				w: output_width,
 				h: output_height
@@ -155,7 +170,7 @@ impl OutputMeta {
 			};
 			for sub in &self.subs {
 				data.frames.push( JsonArrayFrame {
-					filename: sub.name.to_string(),
+					filename: self.calculate_input_name(output_meta_root_dir, output_meta_filename_only, sub.name.as_path()),
 					rotated: sub.rotated,
 					trimmed: true,
 					frame: shapes::Rect { x: sub.dest_x, y: sub.dest_y, w: sub.trimmed_w, h: sub.trimmed_h },
@@ -170,7 +185,7 @@ impl OutputMeta {
 				meta: meta
 			};
 			for sub in &self.subs {
-				data.frames.insert( sub.name.to_string(), JsonHashFrame {
+				data.frames.insert( self.calculate_input_name(output_meta_root_dir, output_meta_filename_only, sub.name.as_path()), JsonHashFrame {
 					rotated: sub.rotated,
 					trimmed: true,
 					frame: shapes::Rect { x: sub.dest_x, y: sub.dest_y, w: sub.trimmed_w, h: sub.trimmed_h },

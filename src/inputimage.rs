@@ -1,7 +1,7 @@
 extern crate image;
 
 pub struct InputImage {
-	pub name: String,
+	pub name: std::path::PathBuf,
 	pub data: Vec<u8>,
 	pub w: i32,
 	pub h: i32,
@@ -13,14 +13,14 @@ pub struct InputImage {
 
 
 impl InputImage {
-	pub fn load( filename: &str ) -> InputImage {
+	pub fn load( filename: &std::path::PathBuf ) -> InputImage {
 		let imga = image::open( filename ).unwrap();
 		let img: image::ImageBuffer<image::Rgba<u8>, std::vec::Vec<u8>> = imga.into_rgba8();
 		let dims = img.dimensions();
 		let data = img.into_vec();
 		let w = dims.0 as i32;
 		let h = dims.1 as i32;
-		InputImage { name: filename.to_string(), w: w, h: h, vw: w, vh: h, vx: 0, vy: 0, data: data }
+		InputImage { name: filename.to_owned(), w: w, h: h, vw: w, vh: h, vx: 0, vy: 0, data: data }
 	}
 	
 	pub fn trim( &mut self ) {

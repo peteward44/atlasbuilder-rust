@@ -1,17 +1,23 @@
 [package]
 name = "atlasbuilder"
-version = "3.0.0"
+version = "4.0.0"
 authors = ["Pete Ward <peteward44@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 image = "*"
 serde = "*"
 serde_derive = "*"
 serde_json = "*"
-clap = "*"
+clap = { version = "*", features = ["cargo"] }
 failure = "*"
 rand = "*"
 png = "*"
 oxipng = "*"
 log = "*"
+pathdiff = "0.2.1"
+
+[dev-dependencies]
+assert_cmd = "2.0.10"
+predicates = "3.0.2"
+assert_fs = "1.0.12"

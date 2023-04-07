@@ -76,7 +76,7 @@ mod test_outputimage {
 							0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 
 							0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0 ];
 		let mut output_image = super::OutputImage::new( 5, 5 );
-		let input_image = super::inputimage::InputImage{ name: "test.png".to_string(), w: 5, h: 5, vw: 5, vh: 5, vx: 0, vy: 0, data: input_vec.clone() };
+		let input_image = super::inputimage::InputImage{ name: std::path::Path::new("test.png").to_owned(), w: 5, h: 5, vw: 5, vh: 5, vx: 0, vy: 0, data: input_vec.clone() };
 		output_image.add_input( &input_image, 0, 0, false );
 		for x in 0..(5*5*4) {
 			let pixel = x/4;
@@ -98,7 +98,7 @@ mod test_outputimage {
 							0,0,0,0, 1,1,1,1, 0,0,0,0, 0,0,0,0, 0,0,0,0, 
 							0,0,0,0, 1,1,1,1, 0,0,0,0, 0,0,0,0, 0,0,0,0 ];
 		let mut output_image = super::OutputImage::new( 5, 5 );
-		let input_image = super::inputimage::InputImage{ name: "test.png".to_string(), w: 5, h: 5, vw: 5, vh: 5, vx: 0, vy: 0, data: input_vec };
+		let input_image = super::inputimage::InputImage{ name: std::path::Path::new("test.png").to_owned(), w: 5, h: 5, vw: 5, vh: 5, vx: 0, vy: 0, data: input_vec };
 		output_image.add_input( &input_image, 0, 0, true );
 		for x in 0..rotated_vec.len() {
 			let pixel = x/4;

@@ -1,0 +1,32 @@
+{
+  "frames": {
+    "input1.png": {
+      "rotated": false,
+      "trimmed": true,
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 199,
+        "h": 199
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 199,
+        "h": 199
+      },
+      "sourceSize": {
+        "w": 200,
+        "h": 200
+      }
+    }
+  },
+  "meta": {
+    "app": "https://github.com/peteward44/atlasbuilder-rust",
+    "image": "out.png",
+    "size": {
+      "w": 256,
+      "h": 256
+    }
+  }
+}

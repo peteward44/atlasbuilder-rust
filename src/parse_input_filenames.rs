@@ -35,9 +35,16 @@ pub fn parse( inputs: Vec<&str> ) -> Result<Vec<PathBuf>, failure::Error> {
 			examine_dir( &p, &mut result )?;
 		} else {
 			if is_image_file( &p ) {
+				if !p.exists() {
+					bail!("File does not exist")
+				}
 				result.push( p );
 			}
 		}
+	}
+
+	if result.len() == 0 {
+		bail!("No valid files found")
 	}
 	
 	Ok(result)
