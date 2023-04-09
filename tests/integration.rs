@@ -62,10 +62,9 @@ mod integration_tests {
         let out_json = temp_dir.child("out.json");
         let mut cmd = Command::cargo_bin("atlasbuilder").unwrap();
         let assert = cmd
-            .arg("--output-name-filename-only")
-            .arg("--output")
+            .arg("--image-output")
             .arg(out_image.to_owned())
-            .arg("--json")
+            .arg("--meta-output")
             .arg(out_json.to_owned())
             .arg(test_data_path.join("input/input1.png"))
             .assert();

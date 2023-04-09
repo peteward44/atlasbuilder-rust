@@ -1,0 +1,33 @@
+<atlas>
+	<frames>
+		{% for frame in frames %}<frame>
+			<filename>{{ frame.filename }}</filename>
+			<rotated>{% if frame.rotated %}true{% else %}false{% endif %}</rotated>
+			<trimmed>{% if frame.trimmed %}true{% else %}false{% endif %}</trimmed>
+			<frame>
+				<x>{{ frame.dest_x }}</x>
+				<y>{{ frame.dest_y }}</y>
+				<w>{{ frame.trimmed_w }}</w>
+				<h>{{ frame.trimmed_h }}</h>
+			</frame>
+			<spriteSourceSize>
+				<x>{{ frame.trimmed_x }}</x>
+				<y>{{ frame.trimmed_y }}</y>
+				<w>{{ frame.trimmed_w }}</w>
+				<h>{{ frame.trimmed_h }}</h>
+			</spriteSourceSize>
+			<sourceSize>
+				<w>{{ frame.pretrimmed_w }}</w>
+				<h>{{ frame.pretrimmed_h }}</h>
+			</sourceSize>
+		</frame>{% endfor %}
+	</frames>
+	<meta>
+		<app>{{ meta.app }}</app>
+		<image>{{ meta.filename }}</image>
+		<size>
+			<w>{{ meta.size.w }}</w>
+			<h>{{ meta.size.h }}</h>
+		</size>
+	</meta>
+</atlas>

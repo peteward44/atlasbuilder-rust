@@ -3,73 +3,26 @@ use tera::Tera;
 use super::shapes;
 use super::inputimage;
 
+// "https://github.com/urraka/texpack"
+
 #[derive(Serialize)]
 struct JsonHashMeta {
-	app: String,
-	image: String,
-	size: shapes::Size
+	pub app: String,
+	pub path_absolute: String,
+	pub path_relative: String,
+	pub filename: String,
+	pub basename: String,
+	pub extension: String,
+	pub size: shapes::Size,
 }
-
-/*
-// JSON HASH
-
-{"frames": {
-
-"image1":
-{
-    "frame": {"x":249,"y":205,"w":213,"h":159},
-    "rotated": false,
-    "trimmed": true,
-    "spriteSourceSize": {"x":0,"y":0,"w":213,"h":159},
-    "sourceSize": {"w":231,"h":175}
-},
-"image2":
-{
-    "frame": {"x":20,"y":472,"w":22,"h":21},
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": {"x":0,"y":0,"w":22,"h":21},
-    "sourceSize": {"w":22,"h":21}
-}},
-"meta": {
-    "app": "https://github.com/urraka/texpack",
-    "image": "atlas.png",
-    "size": {"w":650,"h":497}
-    }
-}
-
-// JSON ARRAY
-
-{"frames": [
-
-{
-    "filename": "image1",
-    "frame": {"x":249,"y":205,"w":213,"h":159},
-    "rotated": false,
-    "trimmed": true,
-    "spriteSourceSize": {"x":0,"y":0,"w":213,"h":159},
-    "sourceSize": {"w":231,"h":175}
-},
-{
-    "filename": "image2",
-    "frame": {"x":29,"y":472,"w":22,"h":21},
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": {"x":0,"y":0,"w":22,"h":21},
-    "sourceSize": {"w":22,"h":21}
-}],
-"meta": {
-    "app": "https://github.com/urraka/texpack",
-    "image": "atlas.png",
-    "size": {"w":650,"h":497}
-    }
-}
-*/
-
 
 #[derive(Serialize)]
 struct SubImage {
-	pub name: String,
+	pub path_absolute: String,
+	pub path_relative: String,
+	pub filename: String,
+	pub basename: String,
+	pub extension: String,
 	pub rotated: bool,
 	pub trimmed: bool,
 	pub dest_x: i32,
@@ -83,32 +36,49 @@ struct SubImage {
 }
 
 pub struct OutputMeta {
-	subs: Vec<SubImage>
+	subs: Vec<SubImage>,
+	tera: Tera,
 }
 
 impl OutputMeta {
 	pub fn new() -> OutputMeta {
-		OutputMeta { subs: vec!() }
+		OutputMeta {
+			subs: vec!(),
+			tera: Tera::new("templates/**/*").unwrap(),
+		}
 	}
 
-	fn calculate_input_name( &self, output_meta_root_dir: &std::path::Path, output_meta_filename_only: bool, image_input_path: &std::path::Path ) -> String {
-		if output_meta_filename_only {
-			return image_input_path.file_name().unwrap().to_str().unwrap().to_string();
-		}
+	fn calculate_absolute_path( &self, image_input_path: &std::path::Path ) -> String {
+		return std::fs::canonicalize(&image_input_path).unwrap().to_str().unwrap().to_owned();
+	}
+
+	fn calculate_relative_path( &self, output_meta_root_dir: &std::path::Path, image_input_path: &std::path::Path ) -> String {
 		if output_meta_root_dir.eq(std::path::Path::new("")) {
 			return image_input_path.to_str().expect("invalid path").to_owned();
 		}
 		return diff_paths(image_input_path, output_meta_root_dir).unwrap().to_str().unwrap().to_owned();
 	}
 
-	fn calculate_output_name( &self, output_meta_root_dir: &std::path::Path, output_meta_filename_only: bool, image_output_path: &std::path::Path ) -> String {
-		return image_output_path.file_name().unwrap().to_str().unwrap().to_string();
+	fn calculate_filename( &self, image_input_path: &std::path::Path ) -> String {
+		return image_input_path.file_name().unwrap().to_str().unwrap().to_owned();
 	}
 
-	pub fn add_input( &mut self, output_meta_root_dir: &std::path::Path, output_meta_filename_only: bool, img: &inputimage::InputImage, dx: i32, dy: i32, rotated: bool ) {
+	fn calculate_basename( &self, image_input_path: &std::path::Path ) -> String {
+		return image_input_path.file_stem().unwrap().to_str().unwrap().to_owned();
+	}
+
+	fn calculate_extension( &self, image_input_path: &std::path::Path ) -> String {
+		return image_input_path.extension().unwrap().to_str().unwrap().to_owned();
+	}
+
+	pub fn add_input( &mut self, input_name_root_dir: &std::path::Path, img: &inputimage::InputImage, dx: i32, dy: i32, rotated: bool ) {
 		let rect = SubImage{
-			name: self.calculate_input_name(output_meta_root_dir, output_meta_filename_only, img.name.as_path()),
-			rotated: rotated,
+			path_absolute: self.calculate_absolute_path(img.name.as_path()),
+			path_relative: self.calculate_relative_path(input_name_root_dir, img.name.as_path()),
+			filename: self.calculate_filename(img.name.as_path()),
+			basename: self.calculate_basename(img.name.as_path()),
+			extension: self.calculate_extension(img.name.as_path()),
+			rotated,
 			trimmed: true,
 			dest_x: dx,
 			dest_y: dy,
@@ -122,22 +92,25 @@ impl OutputMeta {
 		self.subs.push( rect );
 	}
 
-	pub fn save( &self, output_meta_root_dir: &std::path::Path, output_meta_filename_only: bool, filename: &std::path::Path, format: &str, image_output_path: &std::path::Path, output_width: i32, output_height: i32 ) -> std::result::Result<String, failure::Error> {
+	pub fn save( &self, filename: &std::path::PathBuf, template: &str, output_name_root_dir: &std::path::Path, image_output_path: &std::path::Path, output_width: i32, output_height: i32 ) -> std::result::Result<String, failure::Error> {
 		let meta = JsonHashMeta {
 			app: "https://github.com/peteward44/atlasbuilder-rust".to_string(),
-			image: self.calculate_output_name(output_meta_root_dir, output_meta_filename_only, image_output_path),
+			path_absolute: self.calculate_absolute_path(image_output_path),
+			path_relative: self.calculate_relative_path(output_name_root_dir, image_output_path),
+			filename: self.calculate_filename(image_output_path),
+			basename: self.calculate_basename(image_output_path),
+			extension: self.calculate_extension(image_output_path),
 			size: shapes::Size {
 				w: output_width,
 				h: output_height
 			}
 		};
 		
-		let tera = Tera::new("templates/**/*.tmpl").unwrap();
 		let mut context = tera::Context::new();
 		context.insert("meta", &meta);
 		context.insert("frames", &self.subs);
 
-		let result = tera.render("json_hash.tmpl", &context)?;
+		let result = self.tera.render(template, &context)?;
 		std::fs::write( filename, result.to_owned() )?;
 		Ok(result)
 	}

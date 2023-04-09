@@ -1,6 +1,7 @@
 {
-  "frames": {
-    {% for frame in frames %}"{{ frame.name }}": {
+  "frames": [
+    {% for frame in frames %}{
+      "filename": "{{ frame.filename }}",
       "rotated": {% if frame.rotated %}true{% else %}false{% endif %},
       "trimmed": {% if frame.trimmed %}true{% else %}false{% endif %},
       "frame": {
@@ -19,11 +20,11 @@
         "w": {{ frame.pretrimmed_w }},
         "h": {{ frame.pretrimmed_h }}
       }
-    }{% if not loop.last %},{% endif %}{% endfor %}
-  },
+	}{% if not loop.last %},{% endif %}{% endfor %}
+  ],
   "meta": {
     "app": "{{ meta.app }}",
-    "image": "{{ meta.image }}",
+    "image": "{{ meta.filename }}",
     "size": {
       "w": {{ meta.size.w }},
       "h": {{ meta.size.h }}

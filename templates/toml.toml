@@ -1,0 +1,30 @@
+{% for frame in frames %}
+[[frames]]
+filename = "{{ frame.filename }}"
+rotated = {% if frame.rotated %}true{% else %}false{% endif %}
+trimmed = {% if frame.trimmed %}true{% else %}false{% endif %}
+
+  [frames.frame]
+  x = {{ frame.dest_x }}
+  y = {{ frame.dest_y }}
+  w = {{ frame.trimmed_w }}
+  h = {{ frame.trimmed_h }}
+
+  [frames.spriteSourceSize]
+  x = {{ frame.trimmed_x }}
+  y = {{ frame.trimmed_y }}
+  w = {{ frame.trimmed_w }}
+  h = {{ frame.trimmed_h }}
+
+  [frames.sourceSize]
+  w = {{ frame.pretrimmed_w }}
+  h = {{ frame.pretrimmed_h }}
+{% endfor %}
+
+[meta]
+app = "{{ meta.app }}"
+image = "{{ meta.filename }}"
+
+  [meta.size]
+  w = {{ meta.size.w }}
+  h = {{ meta.size.h }}
