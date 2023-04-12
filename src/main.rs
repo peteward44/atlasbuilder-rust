@@ -71,7 +71,7 @@ fn operate() -> std::result::Result<(), failure::Error> {
 		.arg(Arg::new("input")
 			.help("Image filenames to add to atlas")
 			.required(true)
-			.multiple(true)
+			.num_args(1..)
 			.action(clap::ArgAction::Append)
 			.index(1))
 		.arg(Arg::new("input-name-root-dir")

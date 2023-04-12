@@ -5,18 +5,18 @@ authors = ["Pete Ward <peteward44@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-image = "*"
-serde = "*"
-serde_derive = "*"
-serde_json = "*"
-clap = { version = "*", features = ["cargo"] }
-failure = "*"
-rand = "*"
-png = "*"
-oxipng = "*"
-log = "*"
+image = "0.24.6"
+clap = { version = "4.2.1", features = ["cargo"] }
+failure = "0.1.8"
+rand = "0.8.5"
+png = "0.17.8"
+oxipng = "3.0.1"
+log = "0.4.17"
 pathdiff = "0.2.1"
 tera = "1.18.1"
+serde_json = "1.0.95"
+serde = "1.0.160"
+serde_derive = "1.0.160"
 
 [dev-dependencies]
 assert_cmd = "2.0.10"
