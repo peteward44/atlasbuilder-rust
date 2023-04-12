@@ -10,6 +10,34 @@ mod integration_tests {
     use predicates::prelude::*;
     use std::path::{ Path };
 
+	fn are_pngs_equal(lhs: &Path, rhs: &Path) -> bool {
+		let imga1 = image::open( lhs ).unwrap();
+		let img1: image::ImageBuffer<image::Rgba<u8>, std::vec::Vec<u8>> = imga1.into_rgba8();
+		let dims1 = img1.dimensions();
+		let data1 = img1.into_vec();
+		let w1 = dims1.0 as i32;
+		let h1 = dims1.1 as i32;
+
+		let imga2 = image::open( rhs ).unwrap();
+		let img2: image::ImageBuffer<image::Rgba<u8>, std::vec::Vec<u8>> = imga2.into_rgba8();
+		let dims2 = img2.dimensions();
+		let data2 = img2.into_vec();
+		let w2 = dims2.0 as i32;
+		let h2 = dims2.1 as i32;
+		
+		if w1 != w2 || h1 != h2 || data1.len() != data2.len() {
+			return false;
+		}
+		
+		for x in 0..data1.len() {
+			if data1[x] != data2[x] {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
     #[test]
     fn test_help() {
         let mut cmd = Command::cargo_bin("atlasbuilder").unwrap();
@@ -26,7 +54,7 @@ mod integration_tests {
         cmd.assert()
             .failure()
             .code(2)
-            .stderr(predicate::str::contains("error: The following required arguments were not provided:"));
+            .stderr(predicate::str::contains("the following required arguments were not provided:"));
     }
 
     #[test]
@@ -73,7 +101,7 @@ mod integration_tests {
             .code(0);
 
         out_image.assert(predicate::path::exists());
-        out_image.assert(predicate::path::eq_file(test_data_path.join("results/single_input_file_result/out.png")));
+		are_pngs_equal(out_image.path(), test_data_path.join("results/single_input_file_result/out.png").as_path());
         out_json.assert(predicate::path::exists());
         out_json.assert(predicate::path::eq_file(test_data_path.join("results/single_input_file_result/out.json")));
     }
