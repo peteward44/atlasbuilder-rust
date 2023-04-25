@@ -19,7 +19,8 @@
         "w": {{ frame.pretrimmed_w }},
         "h": {{ frame.pretrimmed_h }}
       }
-    }{% if not loop.last %},{% endif %}{% endfor %}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
   },
   "meta": {
     "app": "{{ meta.app }}",

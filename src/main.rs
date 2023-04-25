@@ -59,7 +59,7 @@ fn operate() -> std::result::Result<(), failure::Error> {
 			.short('m')
 			.long("meta-template")
 			.action(clap::ArgAction::Set)
-			.default_value("json_hash.json")
+			.default_value("json-hash")
 			.help("Template to use for outputted meta information. See docs for details"))
 		.arg(Arg::new("padding")
 			.short('p')
@@ -143,14 +143,11 @@ fn operate() -> std::result::Result<(), failure::Error> {
 		output_json_filename = std::path::Path::new(output_meta_filename).to_owned();
 	} else {
 		// use file extension of template used for default
-		let template = std::path::Path::new(meta_template);
-		match template.extension() {
-			Some(ext) => {
-				output_json_filename = std::path::Path::new("out").with_extension(ext.to_owned());
-			},
-			None => {
-				output_json_filename = std::path::Path::new("out.json").to_owned();
-			}
+		// TODO: detect & parse out hypen to work out file extension
+		if meta_template.starts_with("json-") {
+			output_json_filename = std::path::Path::new("out").with_extension("json");
+		} else {
+			output_json_filename = std::path::Path::new("out").with_extension(meta_template.to_owned());
 		}
 	}
 	output_meta.save( &output_json_filename, meta_template, output_name_root_dir, output_filename, output.w, output.h )?;

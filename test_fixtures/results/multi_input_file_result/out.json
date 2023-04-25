@@ -1,0 +1,113 @@
+{
+  "frames": {
+    "input5.png": {
+      "rotated": false,
+      "trimmed": true,
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 199,
+        "h": 199
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 199,
+        "h": 199
+      },
+      "sourceSize": {
+        "w": 200,
+        "h": 200
+      }
+    },
+    "input4.png": {
+      "rotated": false,
+      "trimmed": true,
+      "frame": {
+        "x": 203,
+        "y": 2,
+        "w": 199,
+        "h": 199
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 199,
+        "h": 199
+      },
+      "sourceSize": {
+        "w": 200,
+        "h": 200
+      }
+    },
+    "input3.png": {
+      "rotated": false,
+      "trimmed": true,
+      "frame": {
+        "x": 2,
+        "y": 203,
+        "w": 199,
+        "h": 199
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 199,
+        "h": 199
+      },
+      "sourceSize": {
+        "w": 200,
+        "h": 200
+      }
+    },
+    "input2.png": {
+      "rotated": false,
+      "trimmed": true,
+      "frame": {
+        "x": 203,
+        "y": 203,
+        "w": 199,
+        "h": 199
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 199,
+        "h": 199
+      },
+      "sourceSize": {
+        "w": 200,
+        "h": 200
+      }
+    },
+    "input1_trim.png": {
+      "rotated": true,
+      "trimmed": true,
+      "frame": {
+        "x": 2,
+        "y": 404,
+        "w": 111,
+        "h": 146
+      },
+      "spriteSourceSize": {
+        "x": 24,
+        "y": 31,
+        "w": 111,
+        "h": 146
+      },
+      "sourceSize": {
+        "w": 200,
+        "h": 200
+      }
+    }
+    
+  },
+  "meta": {
+    "app": "https://github.com/peteward44/atlasbuilder-rust",
+    "image": "out.png",
+    "size": {
+      "w": 512,
+      "h": 1024
+    }
+  }
+}
