@@ -4,6 +4,7 @@ extern crate rand;
 use rand::distributions::{Distribution, Uniform};
 use super::shapes;
 
+#[allow(dead_code)]
 fn write_pixel( data: &mut Vec<u8>, x: i32, y: i32, pitch: i32, r: u8, g: u8, b: u8 ) {
 	let pos = (x + (y * pitch))*4;
 	data[(pos+0) as usize] = r;
@@ -12,6 +13,7 @@ fn write_pixel( data: &mut Vec<u8>, x: i32, y: i32, pitch: i32, r: u8, g: u8, b:
 	data[(pos+3) as usize] = 255;
 }
 
+#[allow(dead_code)]
 fn draw_rect( data: &mut Vec<u8>, pitch: i32, rect: &shapes::Rect ) {
     let mut rng = rand::thread_rng();
 	let range = Uniform::from(0..255);
@@ -46,6 +48,7 @@ fn draw_rect( data: &mut Vec<u8>, pitch: i32, rect: &shapes::Rect ) {
 	
 }
 
+#[allow(dead_code)]
 pub fn output_free_rects( w: i32, h: i32, free_rects: &mut Vec<shapes::Rect>, index: i32 ) -> std::result::Result<(), failure::Error> {
 	let filename = format!( "debug{:?}.png", index );
 	let size = w*h*4;

@@ -45,7 +45,7 @@ mod integration_tests {
             .assert()
             .success()
             .code(0)
-            .stdout(predicate::str::contains("Builds texture atlas images with JSON output"));
+            .stdout(predicate::str::contains("Builds texture atlas images with meta data output"));
     }
 
     #[test]

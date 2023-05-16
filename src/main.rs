@@ -21,7 +21,7 @@ fn operate() -> std::result::Result<(), failure::Error> {
 	let matches = Command::new("atlasbuilder")
 		.author("Pete Ward <peteward44@gmail.com>")
 		.version(crate_version!())
-		.about("Builds texture atlas images with JSON output")
+		.about("Builds texture atlas images with meta data output")
 		.arg(Arg::new("rotation-disable")
 			.short('r')
 			.long("rotation-disable")
