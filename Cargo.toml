@@ -10,7 +10,7 @@ clap = { version = "4.2.1", features = ["cargo"] }
 failure = "0.1.8"
 rand = "0.8.5"
 png = "0.17.8"
-oxipng = "3.0.1"
+oxipng = "8.0.0"
 log = "0.4.17"
 pathdiff = "0.2.1"
 tera = "1.18.1"
