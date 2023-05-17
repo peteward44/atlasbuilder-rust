@@ -7,7 +7,7 @@ Intended to be used as part of an automated tool chain, so is not interactive an
 
 ## Download
 
-See the [Releases page](releases/) for downloads for Windows and Linux
+See the [Releases page](https://github.com/peteward44/atlasbuilder-rust/releases/latest) for downloads for Windows and Linux
 
 ## Basic usage
 
