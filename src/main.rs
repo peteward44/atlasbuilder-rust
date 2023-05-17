@@ -60,7 +60,7 @@ fn operate() -> std::result::Result<(), failure::Error> {
 			.long("meta-template")
 			.action(clap::ArgAction::Set)
 			.default_value("json-hash")
-			.help("Template to use for outputted meta information. See docs for details"))
+			.help("Template to use for outputted meta information. Either a name of an existing template (json-hash, json-array, toml, yaml, xml) or a path to a file for your own custom template"))
 		.arg(Arg::new("padding")
 			.short('p')
 			.long("padding")

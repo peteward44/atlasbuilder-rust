@@ -20,30 +20,30 @@ Will output out.png (spritesheet image) and out.json (meta data, telling you the
 Output using a JSON format which outputs as an array instead of a key-value object:
 
 ```
-atlasbuilder --template json-array my_image.png my_other_image.png
+atlasbuilder --meta-template json-array my_image.png my_other_image.png
 ```
 
 TOML format
 
 ```
-atlasbuilder --template toml my_image.png my_other_image.png
+atlasbuilder --meta-template toml my_image.png my_other_image.png
 ```
 
 YAML format
 
 ```
-atlasbuilder --template yaml my_image.png my_other_image.png
+atlasbuilder --meta-template yaml my_image.png my_other_image.png
 ```
 
 XML format
 
 ```
-atlasbuilder --template xml my_image.png my_other_image.png
+atlasbuilder --meta-template xml my_image.png my_other_image.png
 ```
 
 ## Using a custom meta data template
 
-Templates are stored in the "templates" folder where atlasbuilder is installed. You can add your own file here and specify the name using the ```--template``` argument. You can examine the existing templates to understand how it works.
+Templates are stored in the "templates" folder where atlasbuilder is installed. You can add your own file here and specify the name using the ```--meta-template``` argument. You can examine the existing templates to understand how it works.
 The templates are defined using the Rust crate [Tera](https://tera.netlify.app/docs#templates)
 
 ## --help output
@@ -70,7 +70,7 @@ Options:
       --meta-output <meta-output>
           Output filename for meta file [default: ]
   -m, --meta-template <meta-template>
-          Template to use for outputted meta information. See docs for details [default: json-hash]
+          Template to use for outputted meta information. Either a name of an existing template (json-hash, json-array, toml, yaml, xml) or a path to a file for your own custom template [default: json-hash]
   -p, --padding <padding>
           Pixel padding inbetween subimages [default: 2]
       --input-name-root-dir <input-name-root-dir>
@@ -83,3 +83,7 @@ Options:
           Print version
 ```
 
+## TODO
+
+- Better error messages if a template doesn't compile correctly
+- Test for valid template before performing packing operation

@@ -58,7 +58,6 @@ impl OutputImage {
 		// oxipng::optimize_from_memory
 		let options: oxipng::Options = Default::default();
 	//	options.deflate = oxipng::Deflaters::Zopfli;
-	// pub fn optimize_from_memory(data: &[u8], opts: &Options) -> PngResult<Vec<u8>>
 		oxipng::optimize( &oxipng::InFile::Path( filename.to_path_buf() ), &oxipng::OutFile::Path( None ), &options )?;
 		Ok(())
 	}

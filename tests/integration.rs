@@ -323,4 +323,87 @@ mod integration_tests {
         out_json.assert(predicate::path::exists());
         out_json.assert(predicate::path::eq_file(test_data_path.join("results/template_xml_file_result/out.xml")));
     }
+
+    #[test]
+    fn test_non_existent_template_file() {
+        let test_data_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("test_fixtures");
+        
+        let temp_dir = assert_fs::TempDir::new().unwrap()/*.into_persistent()*/;
+        let out_image = temp_dir.child("out.png");
+        let out_json = temp_dir.child("out.xml");
+        let mut cmd = Command::cargo_bin("atlasbuilder").unwrap();
+        let template_path = test_data_path.join("templates/does-not-exist");
+        let assert = cmd
+            .arg("--image-output")
+            .arg(out_image.to_owned())
+            .arg("--meta-output")
+            .arg(out_json.to_owned())
+            .arg("--meta-template")
+            .arg(template_path.to_owned())
+            .arg(test_data_path.join("input/input1.png"))
+            .arg(test_data_path.join("input/input2.png"))
+            .arg(test_data_path.join("input/input3.png"))
+            .assert();
+        assert
+            .failure()
+            .code(1)
+            .stderr(predicate::str::contains(format!("Error: Template '{}' not found", template_path.display())));
+    }
+
+    #[test]
+    fn test_broken_template() {
+        let test_data_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("test_fixtures");
+        
+        let temp_dir = assert_fs::TempDir::new().unwrap()/*.into_persistent()*/;
+        let out_image = temp_dir.child("out.png");
+        let out_json = temp_dir.child("out.xml");
+        let mut cmd = Command::cargo_bin("atlasbuilder").unwrap();
+        let template_path = test_data_path.join("templates/broken-no-loop-end");
+        let assert = cmd
+            .arg("--image-output")
+            .arg(out_image.to_owned())
+            .arg("--meta-output")
+            .arg(out_json.to_owned())
+            .arg("--meta-template")
+            .arg(template_path.to_owned())
+            .arg(test_data_path.join("input/input1.png"))
+            .arg(test_data_path.join("input/input2.png"))
+            .arg(test_data_path.join("input/input3.png"))
+            .assert();
+        assert
+            .failure()
+            .code(1)
+            .stderr(predicate::str::contains("Error: Failed to parse '__tera_one_off'"));
+    }
+
+    #[test]
+    fn test_valid_custom_template() {
+        let test_data_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("test_fixtures");
+        
+        let temp_dir = assert_fs::TempDir::new().unwrap()/*.into_persistent()*/;
+        let out_image = temp_dir.child("out.png");
+        let out_json = temp_dir.child("out.xml");
+        let mut cmd = Command::cargo_bin("atlasbuilder").unwrap();
+        let template_path = test_data_path.join("templates/valid-outside-std-dir");
+        let assert = cmd
+            .arg("--image-output")
+            .arg(out_image.to_owned())
+            .arg("--meta-output")
+            .arg(out_json.to_owned())
+            .arg("--meta-template")
+            .arg(template_path.to_owned())
+            .arg(test_data_path.join("input/input1.png"))
+            .arg(test_data_path.join("input/input2.png"))
+            .arg(test_data_path.join("input/input3.png"))
+            .assert();
+        assert
+            .success()
+            .code(0);
+
+        out_image.assert(predicate::path::exists());
+		are_pngs_equal(out_image.path(), test_data_path.join("results/template_json_hash_file_result/out.png").as_path());
+        out_json.assert(predicate::path::exists());
+        out_json.assert(predicate::path::eq_file(test_data_path.join("results/template_json_hash_file_result/out.json")));
+
+    }
 }

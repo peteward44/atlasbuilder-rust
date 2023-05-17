@@ -1,4 +1,5 @@
 use pathdiff::diff_paths;
+use std::path::Path;
 use tera::Tera;
 use super::shapes;
 use super::inputimage;
@@ -110,8 +111,16 @@ impl OutputMeta {
 		context.insert("meta", &meta);
 		context.insert("frames", &self.subs);
 
-		let result = self.tera.render(template, &context)?;
-		std::fs::write( filename, result.to_owned() )?;
+		// test if template is one of the predefined ones, or if the user has specified a filename
+		let result = match Path::new(template).try_exists() {
+			Ok(true) => {
+				let string = std::fs::read_to_string(template)?;
+				Tera::one_off(string.as_str(), &context, false)?
+			},
+			_ => self.tera.render(template, &context)?,
+		};
+		
+		std::fs::write(filename, result.to_owned())?;
 		Ok(result)
 	}
 }
