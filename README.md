@@ -43,8 +43,12 @@ atlasbuilder --meta-template xml my_image.png my_other_image.png
 
 ## Using a custom meta data template
 
-Templates are stored in the "templates" folder where atlasbuilder is installed. You can add your own file here and specify the name using the ```--meta-template``` argument. You can examine the existing templates to understand how it works.
+You can specify a filename ```--meta-template``` argument to use your own custom template. For examples of valid templates, see the "templates" folder in the atlasbuilder installation folder.
 The templates are defined using the Rust crate [Tera](https://tera.netlify.app/docs#templates)
+
+```
+atlasbuilder --meta-template "/home/jeff/my-custom-template.xml" my_image.png my_other_image.png
+```
 
 ## --help output
 
