@@ -5,6 +5,10 @@ Free to use command line tool to create [texture atlases](https://en.wikipedia.o
 Uses max-rects bin packing algorithm to place sub images optimally within the atlas.
 Intended to be used as part of an automated tool chain, so is not interactive and only accepts command line parameters.
 
+## Download
+
+See the [Releases page](https://github.com/peteward44/atlasbuilder-rust/releases/latest) for downloads for Windows and Linux
+
 ## Basic usage
 
 Simply specify input filenames on the command line:
