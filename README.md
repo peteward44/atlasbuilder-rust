@@ -13,6 +13,12 @@ Simply specify input filenames on the command line:
 atlasbuilder my_image.png my_other_image.png
 ```
 
+You can also specify folder names to process all supported images in that folder:
+
+```
+atlasbuilder my_folder
+```
+
 Will output out.png (spritesheet image) and out.json (meta data, telling you the positions of the sub images within the atlas)
 
 ## Using a different meta data template
