@@ -45,7 +45,12 @@ impl OutputImage {
 //		image::save_buffer( filename, &self.data, self.w as u32, self.h as u32, image::RGBA(8))
 
 		{
-			let file = File::create( filename ).unwrap();
+			let parent_dir = filename.parent();
+			if parent_dir.is_some()
+			{
+				std::fs::create_dir_all(parent_dir.unwrap())?;
+			}
+			let file = File::create(filename).unwrap();
 			let ref mut w = BufWriter::new(file);
 
 			let mut encoder = png::Encoder::new(w, self.w as u32, self.h as u32); // Width is 2 pixels and height is 1.

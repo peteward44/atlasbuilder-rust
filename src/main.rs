@@ -22,11 +22,20 @@ fn operate() -> std::result::Result<(), failure::Error> {
 		.author("Pete Ward <peteward44@gmail.com>")
 		.version(crate_version!())
 		.about("Builds texture atlas images with meta data output")
+		.arg(Arg::new("tilemap")
+			.long("tilemap")
+			.action(clap::ArgAction::SetTrue)
+			.help("Enables tilemap mode, automatically disables trimming, sets all input images to the size of the largest input image"))
 		.arg(Arg::new("rotation-disable")
 			.short('r')
 			.long("rotation-disable")
 			.action(clap::ArgAction::SetTrue)
 			.help("Disable sub image rotation"))
+		.arg(Arg::new("trim-disable")
+			.short('t')
+			.long("trim-disable")
+			.action(clap::ArgAction::SetTrue)
+			.help("Disable sub image trimming"))
 		.arg(Arg::new("fixed-size")
 			.short('f')
 			.long("fixed-size")
@@ -96,17 +105,30 @@ fn operate() -> std::result::Result<(), failure::Error> {
 	let input_name_root_dir = std::path::Path::new(matches.get_one::<String>("input-name-root-dir").unwrap());
 	let output_filename = std::path::Path::new(matches.get_one::<String>("image-output").unwrap());
 	let output_meta_filename = matches.get_one::<String>("meta-output").unwrap();
-	let allow_rotation = !matches.get_flag("rotation-disable");
+	let tilemap_mode = matches.get_flag("tilemap");
+	let allow_trimming = !tilemap_mode && !matches.get_flag("trim-disable");
+	let allow_rotation = !tilemap_mode && !matches.get_flag("rotation-disable");
 	let allow_grow = !matches.get_flag("fixed-size");
 
 	let mut packer = packer::Packer::new( output_width, output_height, allow_grow, allow_rotation, padding );
 
-	println!( "Calculating rects..." );
+	debug!( "Calculating rects..." );
+	let mut largest_w : i32 = 0;
+	let mut largest_h : i32 = 0;
 	let mut inputs: Vec<inputimage::InputImage> = vec!();
 	for filename in input_filenames.iter() {
 		let mut input = inputimage::InputImage::load( filename );
-		input.trim();
-		println!( "{{ w: {:?}, h: {:?} }}", input.vw, input.vh );
+		if allow_trimming
+		{
+			input.trim();
+		}
+		if input.w > largest_w {
+			largest_w = input.w;
+		}
+		if input.h > largest_h {
+			largest_h = input.h;
+		}
+		debug!( "{{ w: {:?}, h: {:?} }}", input.vw, input.vh );
 		inputs.push( input );
 	}
 
@@ -118,9 +140,13 @@ fn operate() -> std::result::Result<(), failure::Error> {
 		packer.add( input.vw, input.vh );
 	}
 
-	while !packer.pack() {
-		if !packer.grow() {
-			bail!( "Output size exceeded!" );
+	if tilemap_mode {
+		packer.pack_tilemap(largest_w, largest_h);
+	} else {
+		while !packer.pack() {
+			if !packer.grow() {
+				bail!( "Output size exceeded!" );
+			}
 		}
 	}
 

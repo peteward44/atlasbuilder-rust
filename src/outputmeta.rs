@@ -1,5 +1,6 @@
 use pathdiff::diff_paths;
 use std::path::Path;
+use std::env;
 use tera::Tera;
 use super::shapes;
 use super::inputimage;
@@ -41,11 +42,19 @@ pub struct OutputMeta {
 	tera: Tera,
 }
 
+fn get_templates_directory() -> String {
+    let mut dir = env::current_exe().expect("Could not get templates directory");
+    dir.pop();
+    dir.push("templates");
+    dir.into_os_string().into_string().unwrap() + "/**/*"
+}
+
 impl OutputMeta {
 	pub fn new() -> OutputMeta {
+		let templates_directory = get_templates_directory();
 		OutputMeta {
 			subs: vec!(),
-			tera: Tera::new("templates/**/*").unwrap(),
+			tera: Tera::new(templates_directory.as_str()).unwrap(),
 		}
 	}
 
@@ -120,6 +129,11 @@ impl OutputMeta {
 			_ => self.tera.render(template, &context)?,
 		};
 		
+		let parent_dir = filename.parent();
+		if parent_dir.is_some()
+		{
+			std::fs::create_dir_all(parent_dir.unwrap())?;
+		}
 		std::fs::write(filename, result.to_owned())?;
 		Ok(result)
 	}

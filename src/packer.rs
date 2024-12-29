@@ -217,6 +217,43 @@ impl Packer {
 		self.used_rects.push( shapes::Rect{ x: 0, y: 0, w: w, h: h } );
 	}
 	
+	pub fn pack_tilemap(&mut self, tile_w: i32, tile_h: i32) {
+		let mut row_count: i32;
+		let column_count: i32;
+		{
+			let float_subimage_count = self.used_rects.len() as f32;
+			let subimage_count_sqrt = float_subimage_count.sqrt();
+			let tile_aspect_ratio: f32 = tile_h as f32 / tile_w as f32;
+			column_count = (subimage_count_sqrt * tile_aspect_ratio).ceil() as i32;
+			row_count = (float_subimage_count / column_count as f32) as i32;
+			if self.used_rects.len() % column_count as usize > 0 {
+				row_count += 1;
+			}
+			self.w = column_count * tile_w;
+			self.h = row_count * tile_h;
+			
+			debug!("self.w={:?} self.h={:?} float_subimage_count={:?} tile_aspect_ratio={:?} row_count={:?} column_count={:?}", self.w, self.h, float_subimage_count, tile_aspect_ratio, row_count, column_count);
+		}
+		let mut tile_index = 0;
+		let mut new_results: Vec<PackResult> = vec!();
+		for used_rect in self.used_rects.iter() {
+			let tile_x = tile_index % column_count;
+			let tile_y = tile_index / column_count;
+			let x = tile_w * tile_x + ((tile_w - used_rect.w) / 2);
+			let y = tile_h * tile_y + ((tile_h - used_rect.h) / 2);
+			let packed_rect = PackResult
+			{
+				rect: shapes::Rect{
+					x, y, w: tile_w, h: tile_h,
+				},
+				rotated: false,
+			};
+			new_results.push(packed_rect);
+			tile_index += 1;
+		}
+		self.results = new_results;
+	}
+	
 	pub fn pack( &mut self ) -> bool {
 		let mut new_results: Vec<PackResult> = vec!();
 		let mut free_rects: Vec<shapes::Rect> = vec!();
@@ -291,7 +328,7 @@ impl Packer {
 mod test_packer {
 
 	fn assert_pack_result( result: &super::PackResult, x: i32, y: i32, w: i32, h: i32, rotated: bool, message: &str ) {
-		println!( "x={:?} y={:?} w={:?} h={:?}", result.rect.x, result.rect.y, result.rect.w, result.rect.h );
+		debug!( "x={:?} y={:?} w={:?} h={:?}", result.rect.x, result.rect.y, result.rect.w, result.rect.h );
 		assert_eq!( result.rect.x, x, "{} - x", message );
 		assert_eq!( result.rect.y, y, "{} - y", message );
 		assert_eq!( result.rect.w, w, "{} - w", message );
