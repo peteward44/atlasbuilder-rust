@@ -39,22 +39,28 @@ struct SubImage {
 
 pub struct OutputMeta {
 	subs: Vec<SubImage>,
-	tera: Tera,
+	tera: Option<Tera>,
 }
 
 fn get_templates_directory() -> String {
     let mut dir = env::current_exe().expect("Could not get templates directory");
     dir.pop();
     dir.push("templates");
-    dir.into_os_string().into_string().unwrap() + "/**/*"
+    dir.into_os_string().into_string().unwrap()
 }
 
 impl OutputMeta {
 	pub fn new() -> OutputMeta {
 		let templates_directory = get_templates_directory();
+		let tera: Option<Tera>;
+		if Path::new(&templates_directory).exists() {
+			tera = Some(Tera::new((templates_directory + "/**/*").as_str()).unwrap());
+		} else {
+			tera = None;
+		}
 		OutputMeta {
 			subs: vec!(),
-			tera: Tera::new(templates_directory.as_str()).unwrap(),
+			tera,
 		}
 	}
 
@@ -103,6 +109,12 @@ impl OutputMeta {
 	}
 
 	pub fn save( &self, filename: &std::path::PathBuf, template: &str, output_name_root_dir: &std::path::Path, image_output_path: &std::path::Path, output_width: i32, output_height: i32 ) -> std::result::Result<String, failure::Error> {
+		match self.tera {
+			None => {
+				bail!("No valid templates configured")
+			},
+			_ => {},
+		}
 		let meta = JsonHashMeta {
 			app: "https://github.com/peteward44/atlasbuilder-rust".to_string(),
 			path_absolute: self.calculate_absolute_path(image_output_path),
@@ -126,7 +138,7 @@ impl OutputMeta {
 				let string = std::fs::read_to_string(template)?;
 				Tera::one_off(string.as_str(), &context, false)?
 			},
-			_ => self.tera.render(template, &context)?,
+			_ => self.tera.as_ref().unwrap().render(template, &context)?,
 		};
 		
 		let parent_dir = filename.parent();

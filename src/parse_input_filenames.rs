@@ -30,7 +30,7 @@ pub fn parse( inputs: Vec<&str> ) -> Result<Vec<PathBuf>, failure::Error> {
 	let mut result : Vec<PathBuf> = vec!();
 	
 	for input in inputs.iter() {
-		let p = Path::new( input.clone() ).to_path_buf();
+		let p = Path::new(input).to_path_buf();
 		if p.is_dir() { 
 			examine_dir( &p, &mut result )?;
 		} else {
