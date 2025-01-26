@@ -1,5 +1,5 @@
 use pathdiff::diff_paths;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::env;
 use tera::Tera;
 use super::shapes;
@@ -42,20 +42,38 @@ pub struct OutputMeta {
 	tera: Option<Tera>,
 }
 
-fn get_templates_directory() -> String {
-    let mut dir = env::current_exe().expect("Could not get templates directory");
-    dir.pop();
-    dir.push("templates");
-    dir.into_os_string().into_string().unwrap()
+fn get_templates_directory() -> std::result::Result<PathBuf, failure::Error> {
+	match env::current_exe() {
+		Ok(mut exe_path) => {
+			exe_path.pop();
+			exe_path.push("templates");
+			if exe_path.exists() {
+				return Ok(exe_path)
+			}
+		},
+		_ => {},
+	}
+	match env::current_dir() {
+		Ok(mut dir_path) => {
+			dir_path.pop();
+			dir_path.push("templates");
+			if dir_path.exists() {
+				return Ok(dir_path)
+			}
+		},
+		_ => {},
+	}
+	bail!("Could not get templates directory");
 }
 
 impl OutputMeta {
 	pub fn new() -> OutputMeta {
-		let templates_directory = get_templates_directory();
+		let templates_directory = get_templates_directory().expect("Could not get templates directory");
 		let tera: Option<Tera>;
 		println!( "Using templates directory {:?}", templates_directory );
-		if Path::new(&templates_directory).exists() {
-			tera = Some(Tera::new((templates_directory + "/**/*").as_str()).unwrap());
+		if templates_directory.exists() {
+			let dir_string = templates_directory.into_os_string().into_string().unwrap() + "/**/*";
+			tera = Some(Tera::new(dir_string.as_str()).unwrap());
 		} else {
 			tera = None;
 		}
