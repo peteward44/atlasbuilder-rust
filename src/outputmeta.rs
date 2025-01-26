@@ -53,6 +53,7 @@ impl OutputMeta {
 	pub fn new() -> OutputMeta {
 		let templates_directory = get_templates_directory();
 		let tera: Option<Tera>;
+		println!( "Using templates directory {:?}", templates_directory );
 		if Path::new(&templates_directory).exists() {
 			tera = Some(Tera::new((templates_directory + "/**/*").as_str()).unwrap());
 		} else {
