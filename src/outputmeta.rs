@@ -55,7 +55,6 @@ fn get_templates_directory() -> std::result::Result<PathBuf, failure::Error> {
 	}
 	match env::current_dir() {
 		Ok(mut dir_path) => {
-			dir_path.pop();
 			dir_path.push("templates");
 			if dir_path.exists() {
 				return Ok(dir_path)
